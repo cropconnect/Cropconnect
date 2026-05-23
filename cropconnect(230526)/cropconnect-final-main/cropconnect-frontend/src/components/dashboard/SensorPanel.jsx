@@ -12,6 +12,16 @@ const StatusChip = ({ status }) => (
   <span className="px-2 py-1 rounded-md bg-green-50 text-green-700 text-xs font-semibold">{status}</span>
 );
 
+const CROP_RANGES = [
+  { reading: "Soil Moisture", safe: "40-70%", warning: "<30% or >80%" },
+  { reading: "Temperature", safe: "20-35\u00b0C", warning: "<10\u00b0C or >42\u00b0C" },
+  { reading: "Humidity", safe: "50-80%", warning: "<30% or >90%" },
+  { reading: "pH", safe: "6.0-7.5", warning: "<5.5 or >8.0" },
+  { reading: "Nitrogen", safe: "20-60 mg/kg", warning: "<10 or >80" },
+  { reading: "Phosphorus", safe: "10-40 mg/kg", warning: "<5 or >60" },
+  { reading: "Potassium", safe: "15-50 mg/kg", warning: "<10 or >80" },
+];
+
 const SensorCard = ({ colors, icon: Icon, title, value, unit, color, min, max, barValue }) => {
   const colorStyles = {
     green: colors.greenLight,
@@ -108,7 +118,31 @@ const SensorPanel = ({ colors, sensorConnection = {}, sensorData = {}, userData 
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-4">
         <h3 className="font-semibold" style={{ color: colors.textDark }}>Crop Sensor Alert Ranges</h3>
       </div>
-      <div className="p-6 text-center text-sm" style={{ color: colors.textLight }}>{EMPTY_DISPLAY}</div>
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-[#e8e3d8]">
+            <th className="text-left py-3 pr-3 font-medium" style={{ color: colors.textMid }}>Reading</th>
+            <th className="text-left py-3 px-3 font-medium" style={{ color: colors.textMid }}>Safe Range</th>
+            <th className="text-left py-3 pl-3 font-medium" style={{ color: colors.textMid }}>Warning</th>
+          </tr>
+        </thead>
+        <tbody>
+          {CROP_RANGES.map((range) => (
+            <tr key={range.reading} className="border-b border-[#f1eee7] last:border-b-0">
+              <td className="py-3 pr-3 font-medium" style={{ color: colors.textDark }}>{range.reading}</td>
+              <td className="py-3 px-3">
+                <span className="inline-flex rounded-md bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">{range.safe}</span>
+              </td>
+              <td className="py-3 pl-3">
+                <span className="inline-flex rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">{range.warning}</span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="text-xs text-slate-400 mt-3">
+        Reference ranges for general Indian summer crops. Consult an agronomist for your specific variety.
+      </p>
     </div>
 
     <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm overflow-x-auto">

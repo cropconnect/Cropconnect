@@ -50,23 +50,27 @@ export default function HowItWorks() {
           </p>
         </div>
 
-        <div className="mt-14 relative grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="mt-14 relative grid grid-cols-1 md:grid-cols-4 gap-6 overflow-visible">
+          <div className="md:hidden absolute left-[2.25rem] top-12 bottom-12 border-l-2 border-dashed border-[#1B4332]/20" />
           <div className="hidden md:block absolute left-0 right-0 top-[34px] border-t-2 border-dashed border-[#1B4332]/20" />
 
           {steps.map((s, i) => (
             <div
               key={i}
               data-testid={`how-step-${i}`}
-              className="relative bg-white border border-[#D5D1C5] rounded-2xl p-6 hover-lift"
+              aria-label={`Step ${s.n}`}
+              className="relative bg-white border border-[#D5D1C5] rounded-2xl p-6 hover-lift flex items-start gap-4 md:block"
             >
-              <div className="absolute -top-4 left-6 bg-[#1B4332] text-[#FDFBF7] font-mono text-xs px-3 py-1 rounded-full">
+              <div className="relative z-10 flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-full bg-[#1B4332] text-[#FDFBF7] font-mono text-xs md:absolute md:-top-4 md:left-6 md:h-auto md:w-auto md:px-3 md:py-1">
                 {s.n}
               </div>
-              <s.icon className="w-6 h-6 text-[#E07A5F] mt-3" />
-              <h3 className="font-display mt-4 text-xl text-[#1A201C]">
-                {s.title}
-              </h3>
-              <p className="mt-2 text-sm text-[#1A201C]/70 leading-relaxed">{s.desc}</p>
+              <div>
+                <s.icon className="w-6 h-6 text-[#E07A5F] md:mt-3" />
+                <h3 className="font-display mt-4 text-xl text-[#1A201C]">
+                  {s.title}
+                </h3>
+                <p className="mt-2 text-sm text-[#1A201C]/70 leading-relaxed">{s.desc}</p>
+              </div>
             </div>
           ))}
         </div>

@@ -17,18 +17,9 @@ const isPresent = (value) => value !== null && value !== undefined && value !== 
 const displayValue = (value, suffix = "") => (isPresent(value) ? `${value}${suffix}` : EMPTY_DISPLAY);
 
 const MarketSkeleton = () => (
-  <div className="space-y-3" aria-label="Loading market prices">
-    {Array.from({ length: 4 }).map((_, index) => (
-      <div key={index} className="flex items-center justify-between gap-4 rounded-lg p-3">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 animate-pulse rounded-lg bg-slate-100" />
-          <div>
-            <div className="h-4 w-28 animate-pulse rounded bg-slate-200" />
-            <div className="mt-2 h-3 w-44 animate-pulse rounded bg-slate-100" />
-          </div>
-        </div>
-        <div className="h-5 w-20 animate-pulse rounded bg-slate-100" />
-      </div>
+  <div className="space-y-3 animate-pulse" aria-label="Loading market prices">
+    {Array.from({ length: 5 }).map((_, i) => (
+      <div key={i} className="h-14 rounded-xl bg-slate-100 border border-[#e8e3d8]" />
     ))}
   </div>
 );
@@ -75,7 +66,7 @@ export default function MarketPanel({
               </Button>
             </div>
           </div>
-          {marketLoading && !prices.length ? (
+          {(marketLoading || (!prices.length && !marketMessage)) ? (
             <MarketSkeleton />
           ) : (
           <div className="space-y-3">

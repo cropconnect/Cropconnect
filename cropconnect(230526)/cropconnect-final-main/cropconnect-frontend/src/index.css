@@ -116,11 +116,12 @@ body {
 
 /* Label pill */
 .eyebrow {
-    font-size: 0.72rem;
-    letter-spacing: 0.24em;
+    font-family: "DM Sans", sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    font-weight: 700;
-    color: var(--forest);
+    font-weight: 600;
+    color: #E07A5F;
 }
 
 /* Live blinking dot */
@@ -139,11 +140,11 @@ body {
 
 /* Soft float for floating card */
 .float-soft {
-    animation: floatY 7s ease-in-out infinite;
+    animation: float 4s ease-in-out infinite;
 }
-@keyframes floatY {
+@keyframes float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
+    50% { transform: translateY(-6px); }
 }
 
 /* Slow rotating ring for the ecosystem center */
@@ -157,11 +158,10 @@ body {
 
 /* Reveal on load stagger */
 .reveal {
-    opacity: 0;
-    transform: translateY(14px);
-    animation: reveal 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+    animation: reveal 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 @keyframes reveal {
+    from { opacity: 0; transform: translateY(16px); }
     to { opacity: 1; transform: translateY(0); }
 }
 
@@ -176,8 +176,8 @@ body {
 
 /* Divider dashed organic */
 .dashed-ring {
-    background-image: radial-gradient(circle, rgba(27,67,50,0.25) 1px, transparent 1px);
-    background-size: 10px 10px;
+    border: 2px dashed #1B4332;
+    border-radius: 50%;
 }
 
 /* Custom selection */
@@ -194,14 +194,32 @@ body {
 
 /* Link underline */
 .link-u {
-    background-image: linear-gradient(currentColor, currentColor);
-    background-size: 0% 1px;
-    background-repeat: no-repeat;
-    background-position: 0 100%;
-    transition: background-size 0.35s ease;
+    position: relative;
 }
-.link-u:hover { background-size: 100% 1px; }
+.link-u::after {
+    content: "";
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #1B4332;
+    transform: scaleX(0);
+    transition: transform 0.2s ease;
+    transform-origin: left;
+}
+.link-u:hover::after { transform: scaleX(1); }
 
 /* Utility: soft elevation on hover */
-.hover-lift { transition: transform 0.3s ease, box-shadow 0.3s ease; }
-.hover-lift:hover { transform: translateY(-3px); box-shadow: 0 10px 30px -15px rgba(15, 42, 31, 0.35); }
+.hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.hover-lift:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(27, 67, 50, 0.1); }
+
+@keyframes bg-shift {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+}
+
+.animate-bg-shift {
+    background-size: 200% 200%;
+    animation: bg-shift 8s ease infinite;
+}

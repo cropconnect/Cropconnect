@@ -4,8 +4,23 @@ const EMPTY_DISPLAY = "--";
 const isPresent = (value) => value !== null && value !== undefined && value !== "";
 const displayValue = (value, suffix = "") => (isPresent(value) ? `${value}${suffix}` : EMPTY_DISPLAY);
 
+const WeatherSkeleton = () => (
+  <div className="space-y-4 animate-pulse" aria-label="Loading weather data">
+    <div className="h-28 rounded-xl bg-slate-100 border border-[#e8e3d8]" />
+    <div className="grid grid-cols-2 gap-3">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="h-20 rounded-xl bg-slate-100" />
+      ))}
+    </div>
+  </div>
+);
+
 const WeatherPanel = ({ colors, weatherData, weatherError, userData = {} }) => {
   const weather = weatherData || {};
+  const hasWeatherData = Object.values(weather).some(isPresent);
+  if (!hasWeatherData && !weatherError) {
+    return <WeatherSkeleton />;
+  }
   const weatherCond = {
     icon: EMPTY_DISPLAY,
     condition: weather.condition || EMPTY_DISPLAY,

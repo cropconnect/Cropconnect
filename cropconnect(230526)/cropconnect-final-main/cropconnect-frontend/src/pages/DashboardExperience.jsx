@@ -1159,10 +1159,9 @@ export default function Dashboard() {
             <div className="mb-4">
               <p className="text-[10px] uppercase tracking-wider px-3 mb-2" style={{ color: colors.textLight }}>{t("overview")}</p>
               {navItems.slice(0, 2).map((item) => (
-                <button key={item.id} onClick={() => setActivePage(item.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative ${activePage === item.id ? "bg-white/12" : "hover:bg-white/5"}`}>
-                  {activePage === item.id && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full" style={{ background: colors.gold }} />}
-                  <item.icon className={`w-4 h-4 ${activePage === item.id ? "text-white" : "text-white/60"}`} />
-                  <span className={`text-sm ${activePage === item.id ? "text-white" : "text-white/70"}`}>{item.label}</span>
+                <button key={item.id} onClick={() => setActivePage(item.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative border-l-[3px] ${activePage === item.id ? "bg-[#1B4332] text-[#FDFBF7] font-medium border-[#E07A5F]" : "text-[#4a5548] hover:bg-[#1B4332]/10 hover:text-[#1B4332] border-transparent"}`}>
+                  <item.icon className={`w-4 h-4 ${activePage === item.id ? "text-[#FDFBF7]" : "text-[#4a5548]"}`} />
+                  <span className={`text-sm ${activePage === item.id ? "text-[#FDFBF7]" : "text-[#4a5548]"}`}>{item.label}</span>
                   {item.badge && <span className="ml-auto px-1.5 py-0.5 text-[10px] rounded-full" style={{ background: item.badge === t("live") ? colors.greenLight : colors.terracotta, color: "white" }}>{item.badge}</span>}
                 </button>
               ))}
@@ -1171,10 +1170,9 @@ export default function Dashboard() {
             <div className="mb-4">
               <p className="text-[10px] uppercase tracking-wider px-3 mb-2" style={{ color: colors.textLight }}>{t("control")}</p>
               {navItems.slice(2, 4).map((item) => (
-                <button key={item.id} onClick={() => setActivePage(item.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative ${activePage === item.id ? "bg-white/12" : "hover:bg-white/5"}`}>
-                  {activePage === item.id && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full" style={{ background: colors.gold }} />}
-                  <item.icon className={`w-4 h-4 ${activePage === item.id ? "text-white" : "text-white/60"}`} />
-                  <span className={`text-sm ${activePage === item.id ? "text-white" : "text-white/70"}`}>{item.label}</span>
+                <button key={item.id} onClick={() => setActivePage(item.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative border-l-[3px] ${activePage === item.id ? "bg-[#1B4332] text-[#FDFBF7] font-medium border-[#E07A5F]" : "text-[#4a5548] hover:bg-[#1B4332]/10 hover:text-[#1B4332] border-transparent"}`}>
+                  <item.icon className={`w-4 h-4 ${activePage === item.id ? "text-[#FDFBF7]" : "text-[#4a5548]"}`} />
+                  <span className={`text-sm ${activePage === item.id ? "text-[#FDFBF7]" : "text-[#4a5548]"}`}>{item.label}</span>
                 </button>
               ))}
             </div>
@@ -1182,10 +1180,9 @@ export default function Dashboard() {
             <div>
               <p className="text-[10px] uppercase tracking-wider px-3 mb-2" style={{ color: colors.textLight }}>{t("intelligence")}</p>
               {navItems.slice(4).map((item) => (
-                <button key={item.id} onClick={() => setActivePage(item.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative ${activePage === item.id ? "bg-white/12" : "hover:bg-white/5"}`}>
-                  {activePage === item.id && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-6 rounded-r-full" style={{ background: colors.gold }} />}
-                  <item.icon className={`w-4 h-4 ${activePage === item.id ? "text-white" : "text-white/60"}`} />
-                  <span className={`text-sm ${activePage === item.id ? "text-white" : "text-white/70"}`}>{item.label}</span>
+                <button key={item.id} onClick={() => setActivePage(item.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative border-l-[3px] ${activePage === item.id ? "bg-[#1B4332] text-[#FDFBF7] font-medium border-[#E07A5F]" : "text-[#4a5548] hover:bg-[#1B4332]/10 hover:text-[#1B4332] border-transparent"}`}>
+                  <item.icon className={`w-4 h-4 ${activePage === item.id ? "text-[#FDFBF7]" : "text-[#4a5548]"}`} />
+                  <span className={`text-sm ${activePage === item.id ? "text-[#FDFBF7]" : "text-[#4a5548]"}`}>{item.label}</span>
                   {item.badge && <span className="ml-auto px-1.5 py-0.5 text-[10px] rounded-full" style={{ background: colors.terracotta, color: "white" }}>{item.badge}</span>}
                 </button>
               ))}

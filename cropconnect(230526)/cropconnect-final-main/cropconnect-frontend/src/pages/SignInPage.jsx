@@ -146,7 +146,7 @@ export default function SignInPage() {
         </div>
 
         {/* Form Card */}
-        <div className="bg-white rounded-2xl shadow-sm border border-[#D5D1C5]/50 p-8">
+        <div className="bg-white rounded-2xl shadow-sm border border-[#D5D1C5]/50 p-5 sm:p-8">
           <div className="text-center mb-6">
             <h1 className="font-display text-2xl text-[#1A201C] mb-2">
               Create Account
