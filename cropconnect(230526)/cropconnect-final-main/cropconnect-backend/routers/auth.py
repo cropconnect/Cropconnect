@@ -48,21 +48,12 @@ def load_owner_profile(owner_id: int) -> dict[str, Any]:
     return user_row_to_payload(row) if row else {}
 
 
-def rate_limit_public_request(request: Request, bucket: str, limit: int, window_seconds: int) -> None:
-    original_get_connection = rate_limit_service.get_connection
-    rate_limit_service.get_connection = get_connection
-    try:
-        rate_limit_service.rate_limit_public_request(request, bucket, limit, window_seconds)
-    finally:
-        rate_limit_service.get_connection = original_get_connection
-
-
 @router.post("/api/auth/signup")
 def auth_signup(payload: AuthSignupIn, request: Request, response: Response):
     email = payload.email.strip().lower()
     email_bucket = hashlib.sha256(email.encode("utf-8")).hexdigest()[:16]
-    rate_limit_public_request(request, "auth-signup-ip", limit=5, window_seconds=60 * 60)
-    rate_limit_public_request(request, f"auth-signup-email-{email_bucket}", limit=3, window_seconds=60 * 60)
+    rate_limit_service.rate_limit_public_request(request, "auth-signup-ip", limit=5, window_seconds=60 * 60)
+    rate_limit_service.rate_limit_public_request(request, f"auth-signup-email-{email_bucket}", limit=3, window_seconds=60 * 60)
 
     insert_sql = """
         INSERT INTO `users` (
@@ -139,8 +130,8 @@ def auth_signup(payload: AuthSignupIn, request: Request, response: Response):
 def auth_login(payload: AuthLoginIn, request: Request, response: Response):
     email = payload.email.strip().lower()
     email_bucket = hashlib.sha256(email.encode("utf-8")).hexdigest()[:16]
-    rate_limit_public_request(request, "auth-login-ip", limit=20, window_seconds=15 * 60)
-    rate_limit_public_request(request, f"auth-login-email-{email_bucket}", limit=8, window_seconds=15 * 60)
+    rate_limit_service.rate_limit_public_request(request, "auth-login-ip", limit=20, window_seconds=15 * 60)
+    rate_limit_service.rate_limit_public_request(request, f"auth-login-email-{email_bucket}", limit=8, window_seconds=15 * 60)
 
     query = """
         SELECT
@@ -208,8 +199,8 @@ def auth_profile(current_user: tuple[int, str] = Depends(get_current_user)):
 def auth_password_reset_request(payload: AuthPasswordResetRequestIn, request: Request):
     email = payload.email.strip().lower()
     email_bucket = hashlib.sha256(email.encode("utf-8")).hexdigest()[:16]
-    rate_limit_public_request(request, "password-reset", limit=3, window_seconds=15 * 60)
-    rate_limit_public_request(request, f"password-reset-email-{email_bucket}", limit=3, window_seconds=60 * 60)
+    rate_limit_service.rate_limit_public_request(request, "password-reset", limit=3, window_seconds=15 * 60)
+    rate_limit_service.rate_limit_public_request(request, f"password-reset-email-{email_bucket}", limit=3, window_seconds=60 * 60)
 
     if smtp_configured():
         try:
@@ -249,8 +240,8 @@ def auth_password_reset_request(payload: AuthPasswordResetRequestIn, request: Re
 def auth_password_reset_confirm(payload: AuthPasswordResetConfirmIn, request: Request):
     email = payload.email.strip().lower()
     email_bucket = hashlib.sha256(email.encode("utf-8")).hexdigest()[:16]
-    rate_limit_public_request(request, "password-reset-confirm", limit=8, window_seconds=15 * 60)
-    rate_limit_public_request(request, f"password-confirm-email-{email_bucket}", limit=5, window_seconds=60 * 60)
+    rate_limit_service.rate_limit_public_request(request, "password-reset-confirm", limit=8, window_seconds=15 * 60)
+    rate_limit_service.rate_limit_public_request(request, f"password-confirm-email-{email_bucket}", limit=5, window_seconds=60 * 60)
     hashed_token = token_hash(payload.token.strip())
 
     try:

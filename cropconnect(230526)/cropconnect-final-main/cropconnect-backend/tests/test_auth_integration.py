@@ -25,7 +25,7 @@ def test_signup_login_and_profile_fetch(fake_db):
     login = client.post("/api/auth/login", json={"email": payload["email"], "password": payload["password"]})
     assert login.status_code == 200
 
-    profile = client.get("/api/auth/profile")
+    profile = client.get("/api/auth/profile", headers={"Authorization": f"Bearer {login.json()['token']}"})
     assert profile.status_code == 200
     assert profile.json()["user"]["email"] == "farmer@example.com"
     assert len(fake_db["users"]) == 1

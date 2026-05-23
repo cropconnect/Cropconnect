@@ -1,15 +1,39 @@
 # ruff: noqa: F821
 from __future__ import annotations
 
+import logging
+
+from db.connections import get_connection, get_server_connection
+from db_utils import (
+    add_column_if_missing,
+    column_exists,
+    drop_column_if_exists,
+    index_exists,
+    modify_column_best_effort,
+    quote_identifier,
+    table_exists,
+)
+
+logger = logging.getLogger("cropconnect")
 _core = None
 
 
 def _bind_core(core):
     global _core
     _core = core
-    for name in dir(core):
-        if not name.startswith("__"):
+    for name in ("DB_CONFIG", "USER_TABLE", "LEGACY_USER_TABLE", "encrypt_text", "esp32_key_hash"):
+        if hasattr(core, name):
             globals()[name] = getattr(core, name)
+
+
+def _get_injected(name: str):
+    value = globals().get(name)
+    if value is None:
+        raise RuntimeError(
+            f"'{name}' is not available - call run_database_migrations() first "
+            "or import it directly if the circular import is resolved"
+        )
+    return value
 
 
 def constraint_exists(cursor, table_schema: str, table_name: str, constraint_name: str) -> bool:
@@ -55,7 +79,7 @@ def migrate_legacy_device_api_keys(cursor, table_schema: str) -> None:
         if not device_id or not legacy_key:
             continue
 
-        key_hash = esp32_key_hash(legacy_key)
+        key_hash = _get_injected("esp32_key_hash")(legacy_key)
         cursor.execute("SELECT id FROM esp32_device_keys WHERE key_hash = %s LIMIT 1", (key_hash,))
         if cursor.fetchone():
             continue
@@ -70,7 +94,7 @@ def migrate_legacy_device_api_keys(cursor, table_schema: str) -> None:
             INSERT INTO esp32_device_keys (device_id, key_hash, encrypted_key, status)
             VALUES (%s, %s, %s, 'active')
             """,
-            (device_id, key_hash, encrypt_text(legacy_key)),
+            (device_id, key_hash, _get_injected("encrypt_text")(legacy_key)),
         )
 
 
@@ -178,7 +202,6 @@ def ensure_users_tables(cursor, database: str) -> None:
 
 
 def ensure_all_tables() -> None:
-    global PUBLIC_RATE_TABLE_READY
     database = DB_CONFIG["database"]
     with get_server_connection() as conn:
         with conn.cursor() as cursor:
@@ -423,7 +446,6 @@ def ensure_all_tables() -> None:
                 "ALTER TABLE dashboard_snapshots ADD CONSTRAINT fk_snapshot_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE",
             )
         conn.commit()
-    PUBLIC_RATE_TABLE_READY = True
 
 
 def run_database_migrations(core) -> None:

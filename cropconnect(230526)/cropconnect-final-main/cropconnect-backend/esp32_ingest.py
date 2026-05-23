@@ -43,7 +43,6 @@ else:
 MYSQL_POOL_SIZE = max(1, settings.mysql_pool_size)
 USER_TABLE = "users"
 LEGACY_USER_TABLE = "sign-in"
-PUBLIC_RATE_TABLE_READY = False
 logger = configure_logging()
 configure_connections(DB_CONFIG, MYSQL_POOL_SIZE)
 _MIGRATION_COMPAT_EXPORTS = (

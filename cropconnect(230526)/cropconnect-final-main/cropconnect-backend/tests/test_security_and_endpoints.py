@@ -77,7 +77,7 @@ class SecurityAndEndpointTests(unittest.TestCase):
         wrong_hash = crypto.hash_password("correct-password")
         fake_conn = FakeConnection(FakeCursor({"id": 1, "email": "farmer@example.com", "password": wrong_hash}))
 
-        with patch.object(auth_routes, "rate_limit_public_request"), patch.object(auth_routes, "get_connection", return_value=fake_conn):
+        with patch.object(auth_routes.rate_limit_service, "rate_limit_public_request"), patch.object(auth_routes, "get_connection", return_value=fake_conn):
             response = client.post("/api/auth/login", json={"email": "farmer@example.com", "password": "wrong-password"})
 
         self.assertEqual(response.status_code, 401)
@@ -95,7 +95,7 @@ class SecurityAndEndpointTests(unittest.TestCase):
             "land_size": 2,
         }
 
-        with patch.object(auth_routes, "rate_limit_public_request"), patch.object(auth_routes, "get_connection", return_value=fake_conn):
+        with patch.object(auth_routes.rate_limit_service, "rate_limit_public_request"), patch.object(auth_routes, "get_connection", return_value=fake_conn):
             response = client.post("/api/auth/signup", json=payload)
 
         self.assertEqual(response.status_code, 409)
