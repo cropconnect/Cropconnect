@@ -25,7 +25,6 @@ services:
       MYSQL_USER: root
       MYSQL_PASSWORD: cropconnect_root
       MYSQL_DATABASE: cropconnect
-      MYSQL_FARMERS_DATABASE: farmers
       MYSQL_POOL_SIZE: "5"
       CROP_DATA_SECRET_KEY: docker_dev_data_secret_change_me_32_chars
       CROP_AUTH_TOKEN_SECRET: docker_dev_auth_secret_change_me_32_chars

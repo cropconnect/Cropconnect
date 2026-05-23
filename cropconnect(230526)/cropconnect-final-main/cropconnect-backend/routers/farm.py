@@ -6,8 +6,7 @@ from fastapi import APIRouter, Cookie, Header, HTTPException, Query
 from db.connections import get_connection
 from logging_config import configure_logging
 from models import DashboardSnapshotIn
-from services.auth_service import decimal_to_float, owner_profile_context, require_auth_owner
-from services.sensor_service import latest_sensor_context
+from services.auth_service import decimal_to_float, require_auth_owner
 
 AUTH_COOKIE_NAME = "cropconnect_auth"
 router = APIRouter()
@@ -101,41 +100,8 @@ def save_dashboard_snapshot(
     authorization: str | None = Header(default=None),
     auth_cookie: str | None = Cookie(default=None, alias=AUTH_COOKIE_NAME),
 ):
-    owner_id, owner_email = require_auth_owner(authorization, auth_cookie)
-    owner_profile = owner_profile_context(owner_id)
-    device_id = str(owner_profile.get("sensorDeviceId") or "").strip()
-    sensor_context = latest_sensor_context(device_id)
-    sensor_data = sensor_context.get("sensor_data") if sensor_context.get("source") == "esp32" else {}
-    try:
-        with get_connection() as conn:
-            with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    INSERT INTO dashboard_snapshots (
-                      user_id, email, device_id, source, sensor_data, pump_data, timers,
-                      weather_data, market_data, telemetry_packet
-                    )
-                    VALUES (%s, %s, %s, %s, CAST(%s AS JSON), CAST(%s AS JSON), CAST(%s AS JSON),
-                            CAST(%s AS JSON), CAST(%s AS JSON), CAST(%s AS JSON))
-                    """,
-                    (
-                        owner_id,
-                        owner_email,
-                        device_id,
-                        sensor_context.get("source") or "unavailable",
-                        json_text(sensor_data),
-                        json_text(payload.pump_data),
-                        json_text(payload.timers),
-                        json_text(None),
-                        json_text(None),
-                        json_text({}),
-                    ),
-                )
-            conn.commit()
-    except Exception as exc:
-        raise_public_error(503, "Could not save dashboard snapshot", "Dashboard snapshot save failed", exc)
-
-    return {"ok": True}
+    require_auth_owner(authorization, auth_cookie)
+    return {"ok": True, "saved": False, "message": "Dashboard snapshots are no longer written automatically"}
 
 
 @router.get("/api/farm/snapshot/latest")

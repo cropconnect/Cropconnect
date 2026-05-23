@@ -40,6 +40,37 @@ def parse_json_column(value: Any, fallback: Any) -> Any:
         return fallback
 
 
+def upsert_current_pump_state(cursor, owner_id: int, owner_email: str, device_id: str, pump_id: str, is_on: bool, runtime: int, schedule: Any, sent_to_esp32: bool, message: str) -> None:
+    cursor.execute(
+        """
+        INSERT INTO current_pump_state (
+          user_id, email, device_id, pump_id, is_on, runtime_minutes, schedule, sent_to_esp32, message
+        )
+        VALUES (%s, %s, %s, %s, %s, %s, CAST(%s AS JSON), %s, %s)
+        ON DUPLICATE KEY UPDATE
+          email = VALUES(email),
+          device_id = VALUES(device_id),
+          is_on = VALUES(is_on),
+          runtime_minutes = VALUES(runtime_minutes),
+          schedule = VALUES(schedule),
+          sent_to_esp32 = VALUES(sent_to_esp32),
+          message = VALUES(message),
+          updated_at = NOW()
+        """,
+        (
+            owner_id,
+            owner_email,
+            device_id,
+            pump_id,
+            1 if is_on else 0,
+            runtime,
+            json_text(schedule),
+            1 if sent_to_esp32 else 0,
+            message,
+        ),
+    )
+
+
 @router.get("/api/esp32/relay-command", response_class=PlainTextResponse)
 def esp32_relay_command(
     x_api_key: str | None = Header(default=None),
@@ -150,24 +181,17 @@ def set_pump_state(
     try:
         with get_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    INSERT INTO pump_states (
-                      user_id, email, device_id, pump_id, is_on, runtime_minutes, schedule, sent_to_esp32, message
-                    )
-                    VALUES (%s, %s, %s, %s, %s, %s, CAST(%s AS JSON), %s, %s)
-                    """,
-                    (
-                        owner_id,
-                        owner_email,
-                        device_id,
-                        payload.pump_id,
-                        1 if payload.on else 0,
-                        payload.runtime or 0,
-                        json_text(payload.schedule),
-                        0,
-                        message,
-                    ),
+                upsert_current_pump_state(
+                    cursor,
+                    owner_id,
+                    owner_email,
+                    device_id,
+                    payload.pump_id,
+                    bool(payload.on),
+                    payload.runtime or 0,
+                    payload.schedule,
+                    False,
+                    message,
                 )
             conn.commit()
     except Exception as exc:
@@ -204,24 +228,17 @@ def save_pump_state(
     try:
         with get_connection() as conn:
             with conn.cursor() as cursor:
-                cursor.execute(
-                    """
-                    INSERT INTO pump_states (
-                      user_id, email, device_id, pump_id, is_on, runtime_minutes, schedule, sent_to_esp32, message
-                    )
-                    VALUES (%s, %s, %s, %s, %s, %s, CAST(%s AS JSON), %s, %s)
-                    """,
-                    (
-                        owner_id,
-                        owner_email,
-                        device_id,
-                        payload.pump_id,
-                        1 if payload.on else 0,
-                        payload.runtime or 0,
-                        json_text(payload.schedule),
-                        1 if payload.sent_to_esp32 else 0,
-                        payload.message or "",
-                    ),
+                upsert_current_pump_state(
+                    cursor,
+                    owner_id,
+                    owner_email,
+                    device_id,
+                    payload.pump_id,
+                    bool(payload.on),
+                    payload.runtime or 0,
+                    payload.schedule,
+                    bool(payload.sent_to_esp32),
+                    payload.message or "",
                 )
             conn.commit()
     except Exception as exc:
@@ -244,46 +261,28 @@ def get_pump_states(
         return {"ok": True, "items": []}
     if owner_id:
         query = """
-            SELECT ps.*
-            FROM pump_states ps
-            INNER JOIN (
-              SELECT pump_id, MAX(id) AS latest_id
-              FROM pump_states
-              WHERE user_id = %s AND device_id = %s
-              GROUP BY pump_id
-            ) latest ON ps.id = latest.latest_id
-            WHERE ps.device_id = %s
-            ORDER BY ps.pump_id
+            SELECT *
+            FROM current_pump_state
+            WHERE user_id = %s AND device_id = %s
+            ORDER BY pump_id
         """
-        values = (owner_id, device_id, device_id)
+        values = (owner_id, device_id)
     elif owner_email:
         query = """
-            SELECT ps.*
-            FROM pump_states ps
-            INNER JOIN (
-              SELECT pump_id, MAX(id) AS latest_id
-              FROM pump_states
-              WHERE email = %s AND device_id = %s
-              GROUP BY pump_id
-            ) latest ON ps.id = latest.latest_id
-            WHERE ps.device_id = %s
-            ORDER BY ps.pump_id
+            SELECT *
+            FROM current_pump_state
+            WHERE email = %s AND device_id = %s
+            ORDER BY pump_id
         """
-        values = (owner_email.strip().lower(), device_id, device_id)
+        values = (owner_email.strip().lower(), device_id)
     else:
         query = """
-            SELECT ps.*
-            FROM pump_states ps
-            INNER JOIN (
-              SELECT pump_id, MAX(id) AS latest_id
-              FROM pump_states
-              WHERE email IS NULL AND user_id IS NULL AND device_id = %s
-              GROUP BY pump_id
-            ) latest ON ps.id = latest.latest_id
-            WHERE ps.device_id = %s
-            ORDER BY ps.pump_id
+            SELECT *
+            FROM current_pump_state
+            WHERE email IS NULL AND user_id IS NULL AND device_id = %s
+            ORDER BY pump_id
         """
-        values = (device_id, device_id)
+        values = (device_id,)
     try:
         with get_connection() as conn:
             with conn.cursor(dictionary=True) as cursor:
@@ -317,7 +316,7 @@ def get_pump_states(
                 "message": "Pump is inside an active backend timer window" if timer_active else (row.get("message") or ""),
                 "timer_active": timer_active,
                 "applied_updated_at": relay_status.get("updated_at"),
-                "updated_at": decimal_to_float(row.get("created_at")),
+                "updated_at": decimal_to_float(row.get("updated_at")),
             }
         )
     for pump_id in sorted(active_timer_pumps - seen_pump_ids):
@@ -565,21 +564,15 @@ def latest_relay_command_states_from_db(device_id: str) -> dict[int, bool]:
         raise HTTPException(status_code=400, detail="device_id is required for relay commands")
     states = {index: False for index in range(1, 9)}
     query = """
-        SELECT ps.pump_id, ps.is_on
-        FROM pump_states ps
-        INNER JOIN (
-          SELECT pump_id, MAX(id) AS latest_id
-          FROM pump_states
-          WHERE device_id = %s
-          GROUP BY pump_id
-        ) latest ON ps.id = latest.latest_id
-        WHERE ps.device_id = %s
+        SELECT pump_id, is_on
+        FROM current_pump_state
+        WHERE device_id = %s
     """
 
     try:
         with get_connection() as conn:
             with conn.cursor(dictionary=True) as cursor:
-                cursor.execute(query, (device_id, device_id))
+                cursor.execute(query, (device_id,))
                 rows = cursor.fetchall()
     except Exception as exc:
         raise_public_error(503, "Could not load relay commands", "Relay command lookup failed", exc)

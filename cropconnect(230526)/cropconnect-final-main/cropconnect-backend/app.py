@@ -29,7 +29,7 @@ if settings.mysql_public_url:
         "port": int(_mysql_url.port or 3306),
         "user": _mysql_url.username,
         "password": _mysql_url.password,
-        "database": _mysql_url.path[1:] or "railway",
+        "database": settings.mysql_database,
     }
 else:
     DB_CONFIG = {
@@ -40,7 +40,7 @@ else:
         "database": settings.mysql_database,
     }
 
-configure_connections(DB_CONFIG, settings.mysql_farmers_database, settings.mysql_pool_size)
+configure_connections(DB_CONFIG, settings.mysql_pool_size)
 
 CSRF_HEADER_NAME = "x-csrf-token"
 FRONTEND_ORIGINS = [

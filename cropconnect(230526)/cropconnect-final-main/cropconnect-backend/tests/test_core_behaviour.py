@@ -181,7 +181,7 @@ class BackendCoreBehaviourTests(unittest.TestCase):
         self.assertEqual(district, "Pune")
         self.assertEqual(requested_location, "Baramati, Pune, Maharashtra")
 
-    def test_farmers_user_table_names_avoid_hyphen_footgun(self):
+    def test_user_table_names_avoid_hyphen_footgun(self):
         self.assertEqual(USER_TABLE, "users")
         self.assertEqual(LEGACY_USER_TABLE, "sign-in")
         self.assertEqual(quote_identifier("users"), "`users`")

@@ -10,7 +10,7 @@ from typing import Any
 from fastapi import HTTPException, Response
 
 from config import settings
-from db.connections import get_farmers_connection
+from db.connections import get_connection
 from logging_config import configure_logging
 from security_crypto import decrypt_text, sign_auth_token, verify_auth_token
 
@@ -60,7 +60,7 @@ def user_row_to_payload(row: dict[str, Any]) -> dict[str, Any]:
 
 def owner_profile_context(owner_id: int) -> dict[str, Any]:
     try:
-        with get_farmers_connection() as conn:
+        with get_connection() as conn:
             with conn.cursor(dictionary=True) as cursor:
                 cursor.execute("SELECT * FROM `users` WHERE `id` = %s LIMIT 1", (owner_id,))
                 row = cursor.fetchone()

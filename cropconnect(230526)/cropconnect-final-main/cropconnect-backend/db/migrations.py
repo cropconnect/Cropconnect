@@ -12,6 +12,31 @@ def _bind_core(core):
             globals()[name] = getattr(core, name)
 
 
+def constraint_exists(cursor, table_schema: str, table_name: str, constraint_name: str) -> bool:
+    cursor.execute(
+        """
+        SELECT COUNT(*) AS count
+        FROM information_schema.TABLE_CONSTRAINTS
+        WHERE CONSTRAINT_SCHEMA = %s
+          AND TABLE_NAME = %s
+          AND CONSTRAINT_NAME = %s
+        """,
+        (table_schema, table_name, constraint_name),
+    )
+    row = cursor.fetchone()
+    count = row["count"] if isinstance(row, dict) else row[0]
+    return bool(count)
+
+
+def add_constraint_best_effort(cursor, database: str, table_name: str, constraint_name: str, sql: str) -> None:
+    if constraint_exists(cursor, database, table_name, constraint_name):
+        return
+    try:
+        cursor.execute(sql)
+    except Exception as exc:
+        logger.warning("Constraint %s skipped for %s.%s: %s", constraint_name, database, table_name, exc)
+
+
 def migrate_legacy_device_api_keys(cursor, table_schema: str) -> None:
     if not column_exists(cursor, table_schema, "devices", "api_key"):
         return
@@ -49,7 +74,111 @@ def migrate_legacy_device_api_keys(cursor, table_schema: str) -> None:
         )
 
 
-def ensure_sensor_tables() -> None:
+def ensure_users_tables(cursor, database: str) -> None:
+    legacy_exists = table_exists(cursor, database, LEGACY_USER_TABLE)
+    users_exists = table_exists(cursor, database, USER_TABLE)
+    if legacy_exists and not users_exists:
+        cursor.execute(
+            "RENAME TABLE {database}.{legacy_table} TO {database}.{user_table}".format(
+                database=quote_identifier(database),
+                legacy_table=quote_identifier(LEGACY_USER_TABLE),
+                user_table=quote_identifier(USER_TABLE),
+            )
+        )
+        logger.info("Renamed legacy %s table to %s", LEGACY_USER_TABLE, USER_TABLE)
+    elif legacy_exists and users_exists:
+        logger.warning("Legacy %s table still exists alongside %s; leaving it untouched", LEGACY_USER_TABLE, USER_TABLE)
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS `users` (
+          `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+          `email` VARCHAR(255) NOT NULL,
+          `password` VARCHAR(255) NOT NULL,
+          `phone` VARCHAR(512) NULL,
+          `name` VARCHAR(512) NULL,
+          `state` VARCHAR(512) NULL,
+          `location` TEXT NULL,
+          `land_size` DECIMAL(10,2) NULL,
+          `location_type` VARCHAR(20) NULL,
+          `district` VARCHAR(512) NULL,
+          `city` VARCHAR(512) NULL,
+          `village` VARCHAR(512) NULL,
+          `sensor_device_id` VARCHAR(80) NULL,
+          `sensors` VARCHAR(20) NULL,
+          `pumps` VARCHAR(20) NULL,
+          `sensor_setup_complete` TINYINT(1) NOT NULL DEFAULT 0,
+          `sensor_setup_status` VARCHAR(40) NULL,
+          PRIMARY KEY (`id`),
+          UNIQUE KEY `uq_users_email` (`email`),
+          UNIQUE KEY `uq_users_sensor_device_id` (`sensor_device_id`)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """
+    )
+    if column_exists(cursor, database, "users", "land size") and not column_exists(cursor, database, "users", "land_size"):
+        cursor.execute("ALTER TABLE `users` RENAME COLUMN `land size` TO `land_size`")
+    add_column_if_missing(cursor, database, "users", "location_type", "VARCHAR(20) NULL")
+    add_column_if_missing(cursor, database, "users", "land_size", "DECIMAL(10,2) NULL")
+    add_column_if_missing(cursor, database, "users", "district", "VARCHAR(120) NULL")
+    add_column_if_missing(cursor, database, "users", "city", "VARCHAR(120) NULL")
+    add_column_if_missing(cursor, database, "users", "village", "VARCHAR(120) NULL")
+    add_column_if_missing(cursor, database, "users", "sensor_device_id", "VARCHAR(80) NULL")
+    add_column_if_missing(cursor, database, "users", "sensors", "VARCHAR(20) NULL")
+    add_column_if_missing(cursor, database, "users", "pumps", "VARCHAR(20) NULL")
+    add_column_if_missing(cursor, database, "users", "sensor_setup_complete", "TINYINT(1) NOT NULL DEFAULT 0")
+    add_column_if_missing(cursor, database, "users", "sensor_setup_status", "VARCHAR(40) NULL")
+    cursor.execute("UPDATE `users` SET `sensor_device_id` = NULL WHERE TRIM(COALESCE(`sensor_device_id`, '')) = ''")
+    cursor.execute(
+        """
+        UPDATE `users` duplicate_user
+        INNER JOIN (
+          SELECT `sensor_device_id`, MIN(`id`) AS keep_id
+          FROM `users`
+          WHERE `sensor_device_id` IS NOT NULL AND TRIM(`sensor_device_id`) <> ''
+          GROUP BY `sensor_device_id`
+          HAVING COUNT(*) > 1
+        ) keepers ON duplicate_user.`sensor_device_id` = keepers.`sensor_device_id`
+        SET
+          duplicate_user.`sensor_device_id` = NULL,
+          duplicate_user.`sensor_setup_complete` = 0,
+          duplicate_user.`sensor_setup_status` = 'pending'
+        WHERE duplicate_user.`id` <> keepers.keep_id
+        """
+    )
+    if not (
+        index_exists(cursor, database, "users", "uq_users_sensor_device_id")
+        or index_exists(cursor, database, "users", "uq_sign_in_sensor_device_id")
+    ):
+        cursor.execute("CREATE UNIQUE INDEX uq_users_sensor_device_id ON `users` (`sensor_device_id`)")
+    modify_column_best_effort(cursor, "users", "password", "VARCHAR(255) NOT NULL")
+    modify_column_best_effort(cursor, "users", "phone", "VARCHAR(512) NULL")
+    modify_column_best_effort(cursor, "users", "name", "VARCHAR(512) NULL")
+    modify_column_best_effort(cursor, "users", "state", "VARCHAR(512) NULL")
+    modify_column_best_effort(cursor, "users", "location", "TEXT NULL")
+    modify_column_best_effort(cursor, "users", "district", "VARCHAR(512) NULL")
+    modify_column_best_effort(cursor, "users", "city", "VARCHAR(512) NULL")
+    modify_column_best_effort(cursor, "users", "village", "VARCHAR(512) NULL")
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS password_reset_tokens (
+          id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+          email VARCHAR(255) NOT NULL,
+          token_hash CHAR(64) NOT NULL,
+          expires_at TIMESTAMP NOT NULL,
+          used_at TIMESTAMP NULL,
+          created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+          PRIMARY KEY (id),
+          UNIQUE KEY uq_reset_token_hash (token_hash),
+          INDEX idx_reset_email_created (email, created_at),
+          INDEX idx_reset_expires (expires_at)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+        """
+    )
+
+
+def ensure_all_tables() -> None:
+    global PUBLIC_RATE_TABLE_READY
     database = DB_CONFIG["database"]
     with get_server_connection() as conn:
         with conn.cursor() as cursor:
@@ -59,7 +188,21 @@ def ensure_sensor_tables() -> None:
         conn.commit()
 
     with get_connection() as conn:
-        with conn.cursor() as cursor:
+        with conn.cursor(dictionary=True) as cursor:
+            ensure_users_tables(cursor, database)
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS devices (
+                  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                  device_id VARCHAR(80) NOT NULL UNIQUE,
+                  display_name VARCHAR(120) NULL,
+                  location VARCHAR(160) NULL,
+                  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                  PRIMARY KEY (id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS sensor_readings (
@@ -77,19 +220,6 @@ def ensure_sensor_tables() -> None:
                   PRIMARY KEY (id),
                   INDEX idx_device_recorded_at (device_id, recorded_at),
                   INDEX idx_recorded_at (recorded_at)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-                """
-            )
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS devices (
-                  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                  device_id VARCHAR(80) NOT NULL UNIQUE,
-                  display_name VARCHAR(120) NULL,
-                  location VARCHAR(160) NULL,
-                  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-                  PRIMARY KEY (id)
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """
             )
@@ -137,6 +267,26 @@ def ensure_sensor_tables() -> None:
             add_column_if_missing(cursor, database, "pump_states", "device_id", "VARCHAR(80) NULL")
             if not index_exists(cursor, database, "pump_states", "idx_pump_device_created"):
                 cursor.execute("CREATE INDEX idx_pump_device_created ON pump_states (device_id, pump_id, created_at)")
+            cursor.execute(
+                """
+                CREATE TABLE IF NOT EXISTS current_pump_state (
+                  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                  user_id BIGINT UNSIGNED NULL,
+                  email VARCHAR(255) NULL,
+                  device_id VARCHAR(80) NULL,
+                  pump_id VARCHAR(40) NOT NULL,
+                  is_on TINYINT(1) NOT NULL DEFAULT 0,
+                  runtime_minutes INT UNSIGNED NOT NULL DEFAULT 0,
+                  schedule JSON NULL,
+                  sent_to_esp32 TINYINT(1) NOT NULL DEFAULT 0,
+                  message VARCHAR(255) NULL,
+                  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+                  PRIMARY KEY (id),
+                  UNIQUE KEY uq_current_pump (user_id, pump_id),
+                  INDEX idx_current_pump_device (device_id, pump_id)
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+            )
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS relay_statuses (
@@ -214,129 +364,6 @@ def ensure_sensor_tables() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """
             )
-        conn.commit()
-
-
-def ensure_farmers_tables() -> None:
-    create_db_sql = """
-        CREATE DATABASE IF NOT EXISTS {database}
-          CHARACTER SET utf8mb4
-          COLLATE utf8mb4_unicode_ci
-    """.format(database=quote_identifier(FARMERS_DATABASE))
-    create_user_sql = """
-        CREATE TABLE IF NOT EXISTS `users` (
-          `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-          `email` VARCHAR(255) NOT NULL,
-          `password` VARCHAR(255) NOT NULL,
-          `phone` VARCHAR(30) NULL,
-          `name` VARCHAR(120) NULL,
-          `state` VARCHAR(120) NULL,
-          `location` VARCHAR(255) NULL,
-          `land_size` DECIMAL(10,2) NULL,
-          `sensor_device_id` VARCHAR(80) NULL,
-          PRIMARY KEY (`id`),
-          UNIQUE KEY `uq_users_email` (`email`),
-          UNIQUE KEY `uq_users_sensor_device_id` (`sensor_device_id`)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-    """
-
-    with get_server_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(create_db_sql)
-        conn.commit()
-
-    with get_farmers_connection() as conn:
-        with conn.cursor(dictionary=True) as cursor:
-            legacy_exists = table_exists(cursor, FARMERS_DATABASE, LEGACY_USER_TABLE)
-            users_exists = table_exists(cursor, FARMERS_DATABASE, USER_TABLE)
-            if legacy_exists and not users_exists:
-                cursor.execute(
-                    "RENAME TABLE {database}.{legacy_table} TO {database}.{user_table}".format(
-                        database=quote_identifier(FARMERS_DATABASE),
-                        legacy_table=quote_identifier(LEGACY_USER_TABLE),
-                        user_table=quote_identifier(USER_TABLE),
-                    )
-                )
-                logger.info("Renamed legacy farmers.%s table to %s", LEGACY_USER_TABLE, USER_TABLE)
-            elif legacy_exists and users_exists:
-                logger.warning("Legacy farmers.%s table still exists alongside %s; leaving it untouched", LEGACY_USER_TABLE, USER_TABLE)
-
-            cursor.execute(create_user_sql)
-            if column_exists(cursor, FARMERS_DATABASE, "users", "land size") and not column_exists(cursor, FARMERS_DATABASE, "users", "land_size"):
-                cursor.execute("ALTER TABLE `users` RENAME COLUMN `land size` TO `land_size`")
-            add_column_if_missing(cursor, FARMERS_DATABASE, "users", "location_type", "VARCHAR(20) NULL")
-            add_column_if_missing(cursor, FARMERS_DATABASE, "users", "land_size", "DECIMAL(10,2) NULL")
-            add_column_if_missing(cursor, FARMERS_DATABASE, "users", "district", "VARCHAR(120) NULL")
-            add_column_if_missing(cursor, FARMERS_DATABASE, "users", "city", "VARCHAR(120) NULL")
-            add_column_if_missing(cursor, FARMERS_DATABASE, "users", "village", "VARCHAR(120) NULL")
-            add_column_if_missing(cursor, FARMERS_DATABASE, "users", "sensor_device_id", "VARCHAR(80) NULL")
-            add_column_if_missing(cursor, FARMERS_DATABASE, "users", "sensors", "VARCHAR(20) NULL")
-            add_column_if_missing(cursor, FARMERS_DATABASE, "users", "pumps", "VARCHAR(20) NULL")
-            add_column_if_missing(cursor, FARMERS_DATABASE, "users", "sensor_setup_complete", "TINYINT(1) NOT NULL DEFAULT 0")
-            add_column_if_missing(cursor, FARMERS_DATABASE, "users", "sensor_setup_status", "VARCHAR(40) NULL")
-            cursor.execute("UPDATE `users` SET `sensor_device_id` = NULL WHERE TRIM(COALESCE(`sensor_device_id`, '')) = ''")
-            cursor.execute(
-                """
-                UPDATE `users` duplicate_user
-                INNER JOIN (
-                  SELECT `sensor_device_id`, MIN(`id`) AS keep_id
-                  FROM `users`
-                  WHERE `sensor_device_id` IS NOT NULL AND TRIM(`sensor_device_id`) <> ''
-                  GROUP BY `sensor_device_id`
-                  HAVING COUNT(*) > 1
-                ) keepers ON duplicate_user.`sensor_device_id` = keepers.`sensor_device_id`
-                SET
-                  duplicate_user.`sensor_device_id` = NULL,
-                  duplicate_user.`sensor_setup_complete` = 0,
-                  duplicate_user.`sensor_setup_status` = 'pending'
-                WHERE duplicate_user.`id` <> keepers.keep_id
-                """
-            )
-            if not (
-                index_exists(cursor, FARMERS_DATABASE, "users", "uq_users_sensor_device_id")
-                or index_exists(cursor, FARMERS_DATABASE, "users", "uq_sign_in_sensor_device_id")
-            ):
-                cursor.execute("CREATE UNIQUE INDEX uq_users_sensor_device_id ON `users` (`sensor_device_id`)")
-            modify_column_best_effort(cursor, "users", "password", "VARCHAR(255) NOT NULL")
-            modify_column_best_effort(cursor, "users", "phone", "VARCHAR(512) NULL")
-            modify_column_best_effort(cursor, "users", "name", "VARCHAR(512) NULL")
-            modify_column_best_effort(cursor, "users", "state", "VARCHAR(512) NULL")
-            modify_column_best_effort(cursor, "users", "location", "TEXT NULL")
-            modify_column_best_effort(cursor, "users", "district", "VARCHAR(512) NULL")
-            modify_column_best_effort(cursor, "users", "city", "VARCHAR(512) NULL")
-            modify_column_best_effort(cursor, "users", "village", "VARCHAR(512) NULL")
-            cursor.execute(
-                """
-                CREATE TABLE IF NOT EXISTS password_reset_tokens (
-                  id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-                  email VARCHAR(255) NOT NULL,
-                  token_hash CHAR(64) NOT NULL,
-                  expires_at TIMESTAMP NOT NULL,
-                  used_at TIMESTAMP NULL,
-                  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                  PRIMARY KEY (id),
-                  UNIQUE KEY uq_reset_token_hash (token_hash),
-                  INDEX idx_reset_email_created (email, created_at),
-                  INDEX idx_reset_expires (expires_at)
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-                """
-            )
-        conn.commit()
-
-
-def ensure_public_rate_limit_table() -> None:
-    global PUBLIC_RATE_TABLE_READY
-    if PUBLIC_RATE_TABLE_READY:
-        return
-    database = DB_CONFIG["database"]
-    with get_server_connection() as conn:
-        with conn.cursor() as cursor:
-            cursor.execute(
-                f"CREATE DATABASE IF NOT EXISTS `{database}` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci"
-            )
-        conn.commit()
-    with get_connection() as conn:
-        with conn.cursor() as cursor:
             cursor.execute(
                 """
                 CREATE TABLE IF NOT EXISTS public_rate_limits (
@@ -350,12 +377,55 @@ def ensure_public_rate_limit_table() -> None:
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
                 """
             )
+            if not index_exists(cursor, database, "public_rate_limits", "idx_rate_bucket_client_time"):
+                cursor.execute("CREATE INDEX idx_rate_bucket_client_time ON public_rate_limits (bucket, client_host, requested_at)")
+
+            add_constraint_best_effort(
+                cursor,
+                database,
+                "sensor_readings",
+                "fk_sensor_device",
+                "ALTER TABLE sensor_readings ADD CONSTRAINT fk_sensor_device FOREIGN KEY (device_id) REFERENCES devices(device_id) ON DELETE CASCADE",
+            )
+            add_constraint_best_effort(
+                cursor,
+                database,
+                "pump_states",
+                "fk_pump_user",
+                "ALTER TABLE pump_states ADD CONSTRAINT fk_pump_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL",
+            )
+            add_constraint_best_effort(
+                cursor,
+                database,
+                "current_pump_state",
+                "fk_current_pump_user",
+                "ALTER TABLE current_pump_state ADD CONSTRAINT fk_current_pump_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE",
+            )
+            add_constraint_best_effort(
+                cursor,
+                database,
+                "pump_timers",
+                "fk_timer_user",
+                "ALTER TABLE pump_timers ADD CONSTRAINT fk_timer_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE",
+            )
+            add_constraint_best_effort(
+                cursor,
+                database,
+                "chat_messages",
+                "fk_chat_user",
+                "ALTER TABLE chat_messages ADD CONSTRAINT fk_chat_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE",
+            )
+            add_constraint_best_effort(
+                cursor,
+                database,
+                "dashboard_snapshots",
+                "fk_snapshot_user",
+                "ALTER TABLE dashboard_snapshots ADD CONSTRAINT fk_snapshot_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE",
+            )
         conn.commit()
     PUBLIC_RATE_TABLE_READY = True
 
 
 def run_database_migrations(core) -> None:
     _bind_core(core)
-    ensure_sensor_tables()
-    ensure_farmers_tables()
-    ensure_public_rate_limit_table()
+    ensure_all_tables()

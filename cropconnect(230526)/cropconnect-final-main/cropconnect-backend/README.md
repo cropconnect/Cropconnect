@@ -1,6 +1,6 @@
 # CropConnect ESP32 Backend
 
-FastAPI service for receiving ESP32 sensor readings, storing them in MySQL, sending enquiries, serving weather and mandi market data, and proxying AI chat requests.
+FastAPI service for receiving ESP32 sensor readings, storing them in one MySQL database, sending enquiries, serving weather and mandi market data, and proxying AI chat requests.
 
 ## Files
 
@@ -51,7 +51,7 @@ export DATA_GOV_MARKET_RESOURCE_URL=https://api.data.gov.in/resource/current-dai
 export MARKET_PRICE_LIMIT=100
 ```
 
-`MYSQL_PASSWORD`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_CSE_ID`, and `DATA_GOV_API_KEY` are private values. Keep them out of screenshots and commits. Local migrations cannot run until `MYSQL_PASSWORD` matches your local MySQL account. AI chat and crop planning cannot answer until `GEMINI_API_KEY` is set. Live market prices cannot load until `DATA_GOV_API_KEY` is set.
+`MYSQL_DATABASE` is the single CropConnect schema; account, sensor, pump, chat, and rate-limit tables all live there. `MYSQL_PASSWORD`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_CSE_ID`, and `DATA_GOV_API_KEY` are private values. Keep them out of screenshots and commits. Local migrations cannot run until `MYSQL_PASSWORD` matches your local MySQL account. AI chat and crop planning cannot answer until `GEMINI_API_KEY` is set. Live market prices cannot load until `DATA_GOV_API_KEY` is set.
 
 Run:
 

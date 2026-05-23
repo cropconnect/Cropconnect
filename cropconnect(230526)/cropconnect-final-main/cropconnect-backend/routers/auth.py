@@ -8,7 +8,7 @@ import mysql.connector
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 
 from config import settings
-from db.connections import get_connection, get_farmers_connection
+from db.connections import get_connection
 from logging_config import configure_logging
 from models import AuthLoginIn, AuthPasswordResetConfirmIn, AuthPasswordResetRequestIn, AuthProfileUpdateIn, AuthSignupIn
 from security_crypto import encrypt_text, hash_password, refresh_auth_token, verify_password
@@ -39,7 +39,7 @@ def raise_public_error(status_code: int, detail: str, _context: str, exc: Except
 
 def load_owner_profile(owner_id: int) -> dict[str, Any]:
     try:
-        with get_farmers_connection() as conn:
+        with get_connection() as conn:
             with conn.cursor(dictionary=True) as cursor:
                 cursor.execute("SELECT * FROM `users` WHERE `id` = %s LIMIT 1", (owner_id,))
                 row = cursor.fetchone()
@@ -109,7 +109,7 @@ def auth_signup(payload: AuthSignupIn, request: Request, response: Response):
     )
 
     try:
-        with get_farmers_connection() as conn:
+        with get_connection() as conn:
             with conn.cursor(dictionary=True) as cursor:
                 cursor.execute(insert_sql, values)
                 user_id = cursor.lastrowid
@@ -151,7 +151,7 @@ def auth_login(payload: AuthLoginIn, request: Request, response: Response):
     """
 
     try:
-        with get_farmers_connection() as conn:
+        with get_connection() as conn:
             with conn.cursor(dictionary=True) as cursor:
                 cursor.execute(query, (email,))
                 row = cursor.fetchone()
@@ -213,7 +213,7 @@ def auth_password_reset_request(payload: AuthPasswordResetRequestIn, request: Re
 
     if smtp_configured():
         try:
-            with get_farmers_connection() as conn:
+            with get_connection() as conn:
                 with conn.cursor(dictionary=True) as cursor:
                     cursor.execute("SELECT id FROM `users` WHERE `email` = %s LIMIT 1", (email,))
                     row = cursor.fetchone()
@@ -254,7 +254,7 @@ def auth_password_reset_confirm(payload: AuthPasswordResetConfirmIn, request: Re
     hashed_token = token_hash(payload.token.strip())
 
     try:
-        with get_farmers_connection() as conn:
+        with get_connection() as conn:
             with conn.cursor(dictionary=True) as cursor:
                 cursor.execute(
                     """
@@ -317,7 +317,7 @@ def auth_profile_update(payload: AuthProfileUpdateIn, current_user: tuple[int, s
     if "sensor_device_id" in data and data["sensor_device_id"] is not None:
         requested_device_id = str(data["sensor_device_id"] or "").strip()
         try:
-            with get_farmers_connection() as conn:
+            with get_connection() as conn:
                 with conn.cursor(dictionary=True) as cursor:
                     cursor.execute("SELECT sensor_device_id FROM `users` WHERE `id` = %s", (owner_id,))
                     current_row = cursor.fetchone()
@@ -349,7 +349,7 @@ def auth_profile_update(payload: AuthProfileUpdateIn, current_user: tuple[int, s
     values.append(owner_id)
 
     try:
-        with get_farmers_connection() as conn:
+        with get_connection() as conn:
             with conn.cursor(dictionary=True) as cursor:
                 cursor.execute("UPDATE `users` SET " + ", ".join(updates) + " WHERE `id` = %s", tuple(values))
                 if cursor.rowcount == 0:

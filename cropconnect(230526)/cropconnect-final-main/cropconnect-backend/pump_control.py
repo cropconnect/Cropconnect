@@ -19,7 +19,7 @@ def pump_number(pump_id: str) -> str:
 def update_relay_command_state(pump_id: str, on: bool) -> None:
     """Compatibility hook.
 
-    Desired relay commands are persisted in MySQL pump_states and fetched per
+    Desired relay commands are persisted in MySQL current_pump_state and fetched per
     device. Keeping this as a no-op prevents process memory from becoming an
     accidental source of truth after deploys or restarts.
     """

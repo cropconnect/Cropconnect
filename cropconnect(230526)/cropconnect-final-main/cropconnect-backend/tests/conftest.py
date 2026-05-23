@@ -144,14 +144,9 @@ def fake_db(monkeypatch):
     }
 
     @contextmanager
-    def farmers_connection():
-        yield FakeConnection(db)
-
-    @contextmanager
     def main_connection():
         yield FakeConnection(db)
 
-    monkeypatch.setattr(auth_routes, "get_farmers_connection", farmers_connection)
     monkeypatch.setattr(rate_limit_service, "get_connection", main_connection)
     monkeypatch.setattr(sensor_service, "get_connection", main_connection)
     monkeypatch.setattr(sensor_routes, "get_connection", main_connection)

@@ -39,8 +39,17 @@ def _fernet() -> Fernet:
     secret = _secret()
     if not secret:
         raise RuntimeError("CROP_DATA_SECRET_KEY is required for encrypted values")
-    key = base64.urlsafe_b64encode(hashlib.sha256(secret.encode("utf-8")).digest())
-    return Fernet(key)
+    return Fernet(_derive_fernet_key(secret))
+
+
+def _derive_fernet_key(secret: str) -> bytes:
+    dk = hashlib.pbkdf2_hmac(
+        "sha256",
+        secret.encode("utf-8"),
+        b"cropconnect-fernet-v1",
+        iterations=200_000,
+    )
+    return base64.urlsafe_b64encode(dk)
 
 
 def encrypt_text(value: Any) -> Any:

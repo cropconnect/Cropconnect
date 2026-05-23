@@ -2,8 +2,7 @@ from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Request
 
-from config import settings
-from db.connections import get_connection, get_farmers_connection
+from db.connections import get_connection
 from models import EnquiryIn
 from services.email_service import send_enquiry_email, smtp_configured
 from services.rate_limit import rate_limit_public_request
@@ -17,7 +16,7 @@ def raise_public_error(status_code: int, detail: str, _context: str, exc: Except
 
 @router.get("/api/health")
 def health():
-    status = {"ok": True, "database": "unknown", "farmers_database": settings.mysql_farmers_database}
+    status = {"ok": True, "database": "unknown"}
     try:
       with get_connection() as conn:
           conn.ping(reconnect=True, attempts=1, delay=0)
@@ -25,14 +24,6 @@ def health():
     except Exception as exc:
       status["ok"] = False
       status["database"] = f"unavailable: {type(exc).__name__}"
-
-    try:
-      with get_farmers_connection() as farmers_conn:
-          farmers_conn.ping(reconnect=True, attempts=1, delay=0)
-      status["farmers_database"] = f"{settings.mysql_farmers_database}:connected"
-    except Exception as exc:
-      status["ok"] = False
-      status["farmers_database"] = f"{settings.mysql_farmers_database}:unavailable:{type(exc).__name__}"
 
     return status
 
