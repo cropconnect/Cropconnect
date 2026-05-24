@@ -1,5 +1,5 @@
 import { CircuitBoard, RadioTower, Cloud, Smartphone } from "lucide-react";
-import { useLandingLanguage } from "./LandingLanguageContext";
+import { useLandingLanguage } from "../../contexts/AppLanguageContext";
 
 const steps = [
   {

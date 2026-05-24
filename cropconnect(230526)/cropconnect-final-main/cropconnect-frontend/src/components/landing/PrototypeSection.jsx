@@ -1,5 +1,5 @@
 import { CircuitBoard, Cpu, Radio, Ruler } from "lucide-react";
-import { useLandingLanguage } from "./LandingLanguageContext";
+import { useLandingLanguage } from "../../contexts/AppLanguageContext";
 
 const specs = [
   { icon: Cpu, label: "MCU", value: "ESP32 field node" },
@@ -45,21 +45,72 @@ export default function PrototypeSection() {
           <div className="relative">
             <div className="absolute -inset-3 rounded-[28px] bg-[#1B4332]/5 -z-0" />
             <div className="relative rounded-[22px] border-[10px] border-[#1B4332] bg-[#0F2A1F] overflow-hidden shadow-[0_40px_80px_-40px_rgba(15,42,31,0.6)]">
-              <img
-                src="https://customer-assets.emergentagent.com/job_sensor-live-hub/artifacts/9bjw3xur_WhatsApp%20Image%202026-04-27%20at%2019.59.47.jpeg"
-                alt="CropConnect prototype hardware"
+              <svg
+                viewBox="0 0 760 520"
                 data-testid="prototype-image"
-                className="w-full h-[420px] sm:h-[520px] object-cover"
-              />
+                className="w-full h-[420px] sm:h-[520px]"
+                role="img"
+                aria-label="CropConnect ESP32 prototype circuit schematic"
+              >
+                <rect width="760" height="520" fill="#0F2A1F" />
+                <rect x="42" y="42" width="676" height="436" rx="34" fill="#1B4332" stroke="#52796F" strokeWidth="3" />
+                <g stroke="#E3C77B" strokeOpacity="0.4" strokeWidth="3" fill="none">
+                  <path d="M185 130 H315" />
+                  <path d="M185 210 H315" />
+                  <path d="M185 290 H315" />
+                  <path d="M185 370 H315" />
+                  <path d="M445 180 H575" />
+                  <path d="M445 260 H575" />
+                  <path d="M445 340 H575" />
+                  <path d="M380 170 V92 H610" />
+                  <path d="M380 350 V430 H150" />
+                  <path d="M314 260 H240 V430" />
+                  <path d="M445 260 H520 V92" />
+                </g>
+                <g fill="#0F2A1F" stroke="#E3C77B" strokeOpacity="0.55">
+                  {["Soil", "DHT22", "pH", "NPK"].map((label, index) => (
+                    <g key={label} transform={`translate(88 ${106 + index * 80})`}>
+                      <rect width="98" height="48" rx="10" />
+                      <text x="49" y="30" textAnchor="middle" fill="#FDFBF7" fontSize="16" fontFamily="DM Sans">{label}</text>
+                      <circle cx="112" cy="24" r="5" fill="#22C55E" stroke="none" />
+                    </g>
+                  ))}
+                </g>
+                <g transform="translate(315 160)">
+                  <rect width="130" height="200" rx="16" fill="#0F2A1F" stroke="#E3C77B" strokeOpacity="0.8" strokeWidth="2" />
+                  <rect x="24" y="48" width="82" height="92" rx="10" fill="#E07A5F" opacity="0.9" />
+                  <text x="65" y="100" textAnchor="middle" fill="#0F2A1F" fontSize="22" fontWeight="700" fontFamily="JetBrains Mono">ESP32</text>
+                  {Array.from({ length: 9 }).map((_, i) => (
+                    <g key={i}>
+                      <rect x="-12" y={20 + i * 18} width="12" height="5" fill="#E3C77B" opacity="0.7" />
+                      <rect x="130" y={20 + i * 18} width="12" height="5" fill="#E3C77B" opacity="0.7" />
+                    </g>
+                  ))}
+                  <circle cx="24" cy="24" r="5" fill="#22C55E" />
+                  <circle cx="106" cy="176" r="5" fill="#22C55E" />
+                </g>
+                <g transform="translate(575 190)">
+                  <rect width="116" height="138" rx="14" fill="#0F2A1F" stroke="#E3C77B" strokeOpacity="0.65" strokeWidth="2" />
+                  <rect x="18" y="18" width="80" height="52" rx="8" fill="#52796F" />
+                  <text x="58" y="50" textAnchor="middle" fill="#FDFBF7" fontSize="16" fontWeight="700" fontFamily="JetBrains Mono">SIM800L</text>
+                  <path d="M26 96 H90 M26 112 H74" stroke="#E3C77B" strokeOpacity="0.6" strokeWidth="4" strokeLinecap="round" />
+                  <circle cx="94" cy="112" r="6" fill="#22C55E" />
+                </g>
+                <g fill="#22C55E">
+                  <circle cx="628" cy="92" r="6" />
+                  <circle cx="150" cy="430" r="6" />
+                  <circle cx="240" cy="430" r="6" />
+                </g>
+              </svg>
               <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between px-4 py-2 rounded-lg bg-black/40 backdrop-blur-md border border-white/10">
-                <span className="font-mono text-xs text-white/80">prototype_v1.jpg</span>
+                <span className="font-mono text-xs text-white/80">prototype_v1 &middot; field node</span>
                 <span className="flex items-center gap-2 text-white/80 text-xs">
                   <span className="live-dot" /> field node
                 </span>
               </div>
             </div>
             <p className="mt-3 text-xs text-[#1A201C]/50 font-mono">
-              Prototype hardware photo.
+              Prototype circuit schematic.
             </p>
           </div>
         </div>

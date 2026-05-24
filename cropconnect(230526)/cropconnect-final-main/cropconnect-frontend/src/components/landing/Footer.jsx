@@ -1,5 +1,5 @@
-import { Leaf } from "lucide-react";
-import { useLandingLanguage } from "./LandingLanguageContext";
+﻿import { Leaf } from "lucide-react";
+import { useLandingLanguage } from "../../contexts/AppLanguageContext";
 
 export default function Footer() {
   const { t } = useLandingLanguage();
@@ -44,17 +44,26 @@ export default function Footer() {
           </div>
 
           <div className="md:col-span-3">
-            <h5 className="eyebrow text-[#E3C77B] text-[10px]">Get updates</h5>
-            <p className="mt-4 text-sm text-white/70">
-              Want pilot access? Drop your email in the enquiry form above — we'll
-              send the onboarding kit.
+            <h5 className="eyebrow text-[#E3C77B] text-[10px]">Get pilot access</h5>
+            <p className="mt-4 text-sm text-white/70 mb-4">
+              Join the early farmer pilot. We'll send setup instructions.
             </p>
+            <button
+              onClick={() => {
+                const el = document.getElementById("contact");
+                if (el) el.scrollIntoView({ behavior: "smooth" });
+              }}
+              className="w-full rounded-full border border-white/20 bg-white/10 hover:bg-white/20 transition-colors px-4 py-2.5 text-sm text-white/90 text-left flex items-center justify-between group"
+            >
+              <span>Request pilot access -&gt;</span>
+            </button>
+            <p className="mt-3 text-xs text-white/40">Maharashtra - Karnataka - Punjab pilots open</p>
           </div>
         </div>
 
         <div className="mt-16 pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/50 font-mono">
-          <span>© {year} CropConnect · Crafted with soil, sun & silicon.</span>
-          <span>v1.0 · prototype ready</span>
+          <span>&copy; {year} CropConnect &middot; Crafted with soil, sun & silicon.</span>
+          <span>v1.0 &middot; prototype ready</span>
         </div>
       </div>
 
@@ -70,3 +79,4 @@ export default function Footer() {
     </footer>
   );
 }
+

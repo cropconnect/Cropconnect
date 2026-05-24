@@ -1,19 +1,19 @@
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "../ui/tabs";
 import { CheckCircle2 } from "lucide-react";
-import { useLandingLanguage } from "./LandingLanguageContext";
+import { useLandingLanguage } from "../../contexts/AppLanguageContext";
 
 const shortTerm = [
-  "Connect one ESP32 field node to the live dashboard.",
-  "Show soil moisture, temperature, humidity and pH readings.",
-  "Store telemetry in MySQL with per-device API keys.",
-  "Use AI crop planning from farm location and sensor context.",
+  "Connect one ESP32 field node and see live soil readings on your dashboard.",
+  "Check soil moisture, temperature, humidity and pH from your phone.",
+  "Ask the AI farming assistant questions in your own language.",
+  "Control your irrigation pump remotely from the dashboard.",
 ];
 
 const longTerm = [
-  "Support multiple farm plots and pump zones per account.",
-  "Add seasonal crop history and yield comparison reports.",
-  "Improve multilingual guidance for farmer-first workflows.",
-  "Build a verified device network for FPO and research partners.",
+  "Manage multiple farm plots and irrigation zones from one account.",
+  "Track crop history across seasons and compare yield results.",
+  "Multilingual voice guidance for farmers who prefer to speak, not type.",
+  "Partner network for FPOs, cooperatives and agricultural research stations.",
 ];
 
 export default function GoalsSection() {
@@ -48,14 +48,14 @@ export default function GoalsSection() {
                 data-testid="tab-short-term"
                 className="rounded-full data-[state=active]:bg-[#1B4332] data-[state=active]:text-[#FDFBF7] px-6 h-10 text-sm"
               >
-                Short-term · 0–6 months
+                What works today
               </TabsTrigger>
               <TabsTrigger
                 value="long"
                 data-testid="tab-long-term"
                 className="rounded-full data-[state=active]:bg-[#1B4332] data-[state=active]:text-[#FDFBF7] px-6 h-10 text-sm"
               >
-                Long-term · 1–3 years
+                What's coming next
               </TabsTrigger>
             </TabsList>
 

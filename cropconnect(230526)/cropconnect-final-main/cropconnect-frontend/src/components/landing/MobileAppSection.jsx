@@ -1,5 +1,5 @@
 import { Languages, Smartphone, Droplets, Thermometer, Bell } from "lucide-react";
-import { useLandingLanguage } from "./LandingLanguageContext";
+import { useLandingLanguage } from "../../contexts/AppLanguageContext";
 
 const langs = [
   "English",
@@ -22,11 +22,31 @@ export default function MobileAppSection() {
       <div className="mx-auto max-w-7xl px-5 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         <div className="lg:col-span-6 order-2 lg:order-1 relative">
           <div className="relative aspect-[4/3] rounded-3xl overflow-hidden border border-[#D5D1C5]">
-            <img
-              src="https://images.unsplash.com/photo-1696371269200-2c8d837426aa?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjAzMzV8MHwxfHNlYXJjaHwzfHxmYXJtZXIlMjBtb2JpbGUlMjBhcHAlMjBhZ3JpY3VsdHVyZXxlbnwwfHx8fDE3Nzc2MTM5Mjh8MA&ixlib=rb-4.1.0&q=85"
-              alt="Farmer using a mobile farming app"
-              className="w-full h-full object-cover"
-            />
+            <svg viewBox="0 0 640 480" className="h-full w-full" role="img" aria-label="Mobile farm dashboard illustration">
+              <rect width="640" height="480" fill="#EDF6F0" />
+              <path d="M0 310 C120 260 200 304 320 252 C445 198 535 234 640 190 L640 480 L0 480 Z" fill="#52796F" opacity="0.5" />
+              <path d="M0 480 L105 292 L160 292 L85 480 Z" fill="#1B4332" />
+              <path d="M112 480 L210 292 L266 292 L198 480 Z" fill="#2D6A4F" />
+              <path d="M232 480 L326 292 L383 292 L326 480 Z" fill="#1B4332" />
+              <path d="M365 480 L445 292 L502 292 L472 480 Z" fill="#2D6A4F" />
+              <g transform="translate(366 54)">
+                <rect width="168" height="318" rx="28" fill="#0F2A1F" />
+                <rect x="14" y="24" width="140" height="270" rx="18" fill="#FDFBF7" />
+                <text x="34" y="62" fill="#1A201C" fontSize="15" fontWeight="700" fontFamily="DM Sans">Field live</text>
+                <circle cx="132" cy="56" r="6" fill="#22C55E" />
+                <rect x="30" y="86" width="108" height="62" rx="12" fill="#1B4332" />
+                <text x="44" y="116" fill="#FDFBF7" fontSize="12" fontFamily="DM Sans">Soil moisture</text>
+                <text x="44" y="138" fill="#E3C77B" fontSize="23" fontFamily="Fraunces">42%</text>
+                <rect x="30" y="164" width="48" height="58" rx="10" fill="#F4F1EA" />
+                <rect x="90" y="164" width="48" height="58" rx="10" fill="#F4F1EA" />
+                <rect x="30" y="236" width="108" height="34" rx="10" fill="#E07A5F" opacity="0.92" />
+              </g>
+              <g transform="translate(92 114)" fill="#FDFBF7" opacity="0.9">
+                <circle cx="42" cy="42" r="42" fill="#E3C77B" opacity="0.8" />
+                <path d="M18 160 c30 -38 78 -38 108 0" stroke="#1B4332" strokeWidth="9" strokeLinecap="round" fill="none" />
+                <path d="M72 86 v72" stroke="#1B4332" strokeWidth="10" strokeLinecap="round" />
+              </g>
+            </svg>
             <div className="absolute inset-0 bg-gradient-to-tr from-[#0F2A1F]/50 via-transparent to-transparent" />
           </div>
 

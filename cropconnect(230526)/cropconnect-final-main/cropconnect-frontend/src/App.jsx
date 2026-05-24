@@ -4,7 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-route
 import { Toaster } from "sonner";
 import { API, AUTH_CACHE_KEY, authHeaders, readAuthToken, readSessionUser } from "./lib/api";
 
-import { LandingLanguageProvider } from "./components/landing/LandingLanguageContext";
+import { LandingLanguageProvider } from "./contexts/AppLanguageContext";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const LoginPage = lazy(() => import("./pages/LoginPage"));

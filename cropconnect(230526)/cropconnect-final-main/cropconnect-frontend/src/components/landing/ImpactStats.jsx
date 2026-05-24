@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLandingLanguage } from "./LandingLanguageContext";
+import { useLandingLanguage } from "../../contexts/AppLanguageContext";
 
 const stats = [
   { value: "7", suffix: "", label: "Soil readings tracked live" },

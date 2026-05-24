@@ -6,7 +6,7 @@ import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
-import { useLandingLanguage } from "./LandingLanguageContext";
+import { useLandingLanguage } from "../../contexts/AppLanguageContext";
 import { API } from "../../lib/api";
 
 export default function ContactSection() {
@@ -29,29 +29,27 @@ export default function ContactSection() {
       return;
     }
     setSending(true);
+    const emailBody = `Name: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}\nOrganization: ${form.organization}\n\nMessage:\n${form.message}`;
+    const mailtoLink = `mailto:cropconnectco@gmail.com?subject=CropConnect Enquiry from ${form.name}&body=${encodeURIComponent(emailBody)}`;
     try {
-      const emailBody = `Name: ${form.name}\nEmail: ${form.email}\nPhone: ${form.phone}\nOrganization: ${form.organization}\n\nMessage:\n${form.message}`;
-      const mailtoLink = `mailto:cropconnectco@gmail.com?subject=CropConnect Enquiry from ${form.name}&body=${encodeURIComponent(emailBody)}`;
-
-      try {
-        await axios.post(`${API}/enquiries`, form);
-      } catch {
-        window.location.href = mailtoLink;
-      }
-
+      await axios.post(`${API}/enquiries`, form);
       toast.success("Thanks! We'll get back to you within 24 hours.");
       setForm({ name: "", email: "", phone: "", organization: "", message: "" });
     } catch (err) {
-      const msg =
-        err?.response?.data?.detail?.[0]?.msg ||
-        err?.response?.data?.detail ||
-        "Could not send — please try again.";
-      toast.error(typeof msg === "string" ? msg : "Something went wrong.");
+      const msg = err?.response?.data?.detail;
+      const readableMsg = typeof msg === "string" ? msg : Array.isArray(msg) ? msg[0]?.msg : null;
+      if (err?.response) {
+        toast.error(readableMsg || "Could not send - please try again.");
+      } else {
+        toast.error("Could not reach the server. You can email us directly at cropconnectco@gmail.com", {
+          duration: 8000,
+          action: { label: "Open email", onClick: () => window.open(mailtoLink) },
+        });
+      }
     } finally {
       setSending(false);
     }
   };
-
   return (
     <section
       id="contact"

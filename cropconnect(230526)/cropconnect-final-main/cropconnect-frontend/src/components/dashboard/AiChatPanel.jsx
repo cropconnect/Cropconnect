@@ -40,7 +40,7 @@ export default function AiChatPanel({
   return (
     <div className="space-y-6">
       <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">
-        <div className="rounded-xl overflow-hidden flex flex-col" style={{ height: "500px" }}>
+        <div className="rounded-xl overflow-hidden flex flex-col" style={{ height: "min(500px, calc(100vh - 380px))" }}>
           <div ref={chatContainerRef} className="flex-1 overflow-y-auto p-4 space-y-4">
             {chatMessages.map((msg) => (
               <div key={msg.id} className={`flex gap-3 ${msg.type === "user" ? "flex-row-reverse" : ""}`}>
@@ -71,7 +71,9 @@ export default function AiChatPanel({
             )}
           </div>
 
-          {showSuggestions && (
+          <div
+            className={`transition-all duration-300 ${showSuggestions ? "opacity-100 max-h-40" : "opacity-0 max-h-0 overflow-hidden"}`}
+          >
             <div className="px-4 py-2 flex gap-2 flex-wrap border-t" style={{ borderColor: colors.creamDark }}>
               {suggestionChips.map((chip) => (
                 <button
@@ -84,11 +86,22 @@ export default function AiChatPanel({
                 </button>
               ))}
             </div>
-          )}
+          </div>
 
           <div className="flex flex-col gap-2 p-4 border-t" style={{ borderColor: colors.creamDark }}>
             <div className="flex gap-2">
-              <Input value={chatInput} onChange={(event) => setChatInput(event.target.value)} onKeyDown={(event) => event.key === "Enter" && handleSendMessage()} placeholder={ct("chatPlaceholder")} className="flex-1" />
+              <Input
+                value={chatInput}
+                onChange={(event) => setChatInput(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" && !event.shiftKey) {
+                    event.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                placeholder={ct("chatPlaceholder")}
+                className="flex-1"
+              />
               <Button
                 onClick={isListening ? stopListening : startListening}
                 disabled={isTyping}

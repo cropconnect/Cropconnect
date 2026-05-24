@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState, useEffect } from "react";
 import axios from "axios";
-import { translations } from "../../lib/translations";
-import { API } from "../../lib/api";
-import { publicTranslationEnabled } from "../LanguageSelect";
+import { translations } from "../lib/translations";
+import { API } from "../lib/api";
+import { publicTranslationEnabled } from "../components/LanguageSelect";
 
 const LanguageContext = createContext(null);
 

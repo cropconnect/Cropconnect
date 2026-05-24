@@ -42,7 +42,7 @@ import MarketSection from "../components/dashboard/MarketSection";
 import PumpSection from "../components/dashboard/PumpSection";
 import SensorSection from "../components/dashboard/SensorSection";
 import WeatherSection from "../components/dashboard/WeatherSection";
-import { useLandingLanguage } from "../components/landing/LandingLanguageContext";
+import { useLandingLanguage } from "../contexts/AppLanguageContext";
 import DashboardPageContent from "../components/dashboard/DashboardPageContent";
 import { toast } from "sonner";
 import { API } from "../lib/api";
@@ -1257,9 +1257,30 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <div className="p-3 sm:p-5 md:p-6 pt-[80px] md:pt-[80px]">{renderPage()}</div>
+        <div className="p-3 sm:p-5 md:p-6 pt-[80px] md:pt-[80px] pb-16 sm:pb-0">{renderPage()}</div>
       </main>
 
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#D5D1C5] flex items-stretch">
+        {[
+          { id: "sensors", icon: Radio, label: "Sensors" },
+          { id: "pumps", icon: Droplets, label: "Pumps" },
+          { id: "weather", icon: CloudSun, label: "Weather" },
+          { id: "ai", icon: Brain, label: "AI" },
+        ].map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setActivePage(item.id)}
+            className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 text-[10px] font-medium transition-colors ${
+              activePage === item.id
+                ? "text-[#1B4332] bg-[#1B4332]/5"
+                : "text-[#8a9488]"
+            }`}
+          >
+            <item.icon className="w-5 h-5" strokeWidth={activePage === item.id ? 2 : 1.5} />
+            {item.label}
+          </button>
+        ))}
+      </nav>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { Leaf, Menu, X } from "lucide-react";
 import { Button } from "../ui/button";
 import LanguageSelect from "../LanguageSelect";
-import { useLandingLanguage } from "./LandingLanguageContext";
+import { useLandingLanguage } from "../../contexts/AppLanguageContext";
 
 export default function Header() {
   const [open, setOpen] = useState(false);

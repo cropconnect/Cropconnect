@@ -1,5 +1,5 @@
 import { Users, Landmark, Truck, GraduationCap, Store, Leaf } from "lucide-react";
-import { useLandingLanguage } from "./LandingLanguageContext";
+import { useLandingLanguage } from "../../contexts/AppLanguageContext";
 
 const nodes = [
   { icon: Users, label: "Farmers", angle: 0 },

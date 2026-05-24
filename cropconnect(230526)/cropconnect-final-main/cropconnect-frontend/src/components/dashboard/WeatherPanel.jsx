@@ -39,7 +39,7 @@ const WeatherPanel = ({ colors, weatherData, weatherError, userData = {} }) => {
   const peakRainfall = rainfallSeries.reduce((peak, item) => Math.max(peak, item.value || 0), 0);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-live="polite" aria-atomic="false">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 p-6 rounded-xl" style={{ background: `linear-gradient(135deg, ${colors.greenDark}, #0f2a1f)` }}>
           <div className="flex items-center gap-2 mb-2">

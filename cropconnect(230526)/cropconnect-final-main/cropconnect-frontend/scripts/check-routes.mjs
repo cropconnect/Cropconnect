@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 
 const appSource = readFileSync(new URL("../src/App.jsx", import.meta.url), "utf8").replace(/\s+/g, " ");
-const translationSource = readFileSync(new URL("../src/components/landing/LandingLanguageContext.jsx", import.meta.url), "utf8");
+const translationSource = readFileSync(new URL("../src/contexts/AppLanguageContext.jsx", import.meta.url), "utf8");
 
 const requiredProtectedRoutes = [
   ['path="/dashboard"', "<ProtectedPage><Dashboard /></ProtectedPage>"],

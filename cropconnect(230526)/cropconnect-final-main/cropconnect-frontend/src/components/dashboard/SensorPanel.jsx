@@ -88,7 +88,7 @@ const SensorPanel = ({ colors, sensorConnection = {}, sensorData = {}, userData 
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" aria-live="polite" aria-atomic="false">
     <div className="p-4 rounded-xl border border-[#d5d1c5] bg-[#f7f5ef] shadow-sm">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>

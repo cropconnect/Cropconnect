@@ -7,7 +7,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import { API, clearCsrfToken, clearSessionUser, storeAuthToken, storeCsrfToken, storeSessionUser } from "../lib/api";
-import { useLandingLanguage } from "../components/landing/LandingLanguageContext";
+import { useLandingLanguage } from "../contexts/AppLanguageContext";
 import LanguageSelect from "../components/LanguageSelect";
 
 export default function LoginPage() {

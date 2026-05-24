@@ -1,7 +1,11 @@
 import { ArrowRight, Sparkles, Globe2 } from "lucide-react";
 import { Button } from "../ui/button";
 import LiveSensorCard from "./LiveSensorCard";
-import { useLandingLanguage } from "./LandingLanguageContext";
+import { useLandingLanguage } from "../../contexts/AppLanguageContext";
+
+const FIELD_ARCS = Array.from({ length: 16 }, (_, index) => (
+  `<path d="M${18 + index * 34} 344 c10 -18 22 -18 32 0" fill="none" stroke="#EDF6F0" stroke-width="3" stroke-linecap="round" />`
+)).join("");
 
 export default function Hero() {
   const { t } = useLandingLanguage();
@@ -112,18 +116,7 @@ export default function Hero() {
               <path d="M124 650 L207 304" stroke="#E3C77B" strokeWidth="5" opacity="0.45" />
               <path d="M234 650 L301 304" stroke="#E3C77B" strokeWidth="5" opacity="0.45" />
               <path d="M354 650 L398 304" stroke="#E3C77B" strokeWidth="5" opacity="0.45" />
-              <g opacity="0.7">
-                {Array.from({ length: 16 }).map((_, index) => (
-                  <path
-                    key={index}
-                    d={`M${18 + index * 34} 344 c10 -18 22 -18 32 0`}
-                    fill="none"
-                    stroke="#EDF6F0"
-                    strokeWidth="3"
-                    strokeLinecap="round"
-                  />
-                ))}
-              </g>
+              <g opacity="0.7" dangerouslySetInnerHTML={{ __html: FIELD_ARCS }} />
               <g transform="translate(190 230)">
                 <rect x="0" y="0" width="142" height="96" rx="18" fill="#0F2A1F" />
                 <rect x="12" y="12" width="118" height="72" rx="12" fill="#1B4332" stroke="#E3C77B" strokeWidth="2" />
