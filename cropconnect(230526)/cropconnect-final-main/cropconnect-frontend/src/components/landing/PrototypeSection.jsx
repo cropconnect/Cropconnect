@@ -1,6 +1,19 @@
 import { CircuitBoard, Cpu, Radio, Ruler } from "lucide-react";
 import { useLandingLanguage } from "../../contexts/AppLanguageContext";
 
+const SENSOR_LABELS = ["Soil", "DHT22", "pH", "NPK"].map((label, index) => (
+  `<g transform="translate(88 ${106 + index * 80})">`
+  + `<rect width="98" height="48" rx="10" fill="#0F2A1F" stroke="#E3C77B" stroke-opacity="0.55"/>`
+  + `<text x="49" y="30" text-anchor="middle" fill="#FDFBF7" font-size="16" font-family="DM Sans">${label}</text>`
+  + `<circle cx="112" cy="24" r="5" fill="#22C55E" stroke="none"/>`
+  + `</g>`
+)).join("");
+
+const ESP32_PINS = Array.from({ length: 9 }, (_, i) => (
+  `<rect x="-12" y="${20 + i * 18}" width="12" height="5" fill="#E3C77B" opacity="0.7" />`
+  + `<rect x="130" y="${20 + i * 18}" width="12" height="5" fill="#E3C77B" opacity="0.7" />`
+)).join("");
+
 const specs = [
   { icon: Cpu, label: "MCU", value: "ESP32 field node" },
   { icon: Radio, label: "Connectivity", value: "SIM800L cellular" },
@@ -10,6 +23,18 @@ const specs = [
 
 export default function PrototypeSection() {
   const { t } = useLandingLanguage();
+  const specCards = specs.map((s, i) => (
+    <div
+      key={i}
+      data-testid={`prototype-spec-${i}`}
+      className="rounded-xl border border-[#D5D1C5] bg-white p-4 hover-lift"
+    >
+      <s.icon className="w-4 h-4 text-[#E07A5F]" />
+      <div className="mt-3 eyebrow text-[10px]">{s.label}</div>
+      <div className="mt-1 text-sm font-medium text-[#1A201C]">{s.value}</div>
+    </div>
+  ));
+
   return (
     <section
       id="prototype"
@@ -27,17 +52,7 @@ export default function PrototypeSection() {
           </p>
 
           <div className="mt-8 grid grid-cols-2 gap-4">
-            {specs.map((s, i) => (
-              <div
-                key={i}
-                data-testid={`prototype-spec-${i}`}
-                className="rounded-xl border border-[#D5D1C5] bg-white p-4 hover-lift"
-              >
-                <s.icon className="w-4 h-4 text-[#E07A5F]" />
-                <div className="mt-3 eyebrow text-[10px]">{s.label}</div>
-                <div className="mt-1 text-sm font-medium text-[#1A201C]">{s.value}</div>
-              </div>
-            ))}
+            {specCards}
           </div>
         </div>
 
@@ -67,25 +82,12 @@ export default function PrototypeSection() {
                   <path d="M314 260 H240 V430" />
                   <path d="M445 260 H520 V92" />
                 </g>
-                <g fill="#0F2A1F" stroke="#E3C77B" strokeOpacity="0.55">
-                  {["Soil", "DHT22", "pH", "NPK"].map((label, index) => (
-                    <g key={label} transform={`translate(88 ${106 + index * 80})`}>
-                      <rect width="98" height="48" rx="10" />
-                      <text x="49" y="30" textAnchor="middle" fill="#FDFBF7" fontSize="16" fontFamily="DM Sans">{label}</text>
-                      <circle cx="112" cy="24" r="5" fill="#22C55E" stroke="none" />
-                    </g>
-                  ))}
-                </g>
+                <g dangerouslySetInnerHTML={{ __html: SENSOR_LABELS }} />
                 <g transform="translate(315 160)">
                   <rect width="130" height="200" rx="16" fill="#0F2A1F" stroke="#E3C77B" strokeOpacity="0.8" strokeWidth="2" />
                   <rect x="24" y="48" width="82" height="92" rx="10" fill="#E07A5F" opacity="0.9" />
                   <text x="65" y="100" textAnchor="middle" fill="#0F2A1F" fontSize="22" fontWeight="700" fontFamily="JetBrains Mono">ESP32</text>
-                  {Array.from({ length: 9 }).map((_, i) => (
-                    <g key={i}>
-                      <rect x="-12" y={20 + i * 18} width="12" height="5" fill="#E3C77B" opacity="0.7" />
-                      <rect x="130" y={20 + i * 18} width="12" height="5" fill="#E3C77B" opacity="0.7" />
-                    </g>
-                  ))}
+                  <g dangerouslySetInnerHTML={{ __html: ESP32_PINS }} />
                   <circle cx="24" cy="24" r="5" fill="#22C55E" />
                   <circle cx="106" cy="176" r="5" fill="#22C55E" />
                 </g>

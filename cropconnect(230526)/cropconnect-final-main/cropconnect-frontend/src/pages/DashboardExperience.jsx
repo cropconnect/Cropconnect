@@ -880,6 +880,8 @@ export default function Dashboard() {
     { id: "settings", icon: Settings, label: t("settings") },
     { id: "profile", icon: User, label: t("profile") },
   ];
+  const MOBILE_NAV_IDS = ["sensors", "pump", "weather", "ai"];
+  const mobileNavItems = navItems.filter((item) => MOBILE_NAV_IDS.includes(item.id));
 
   const suggestionChips = [
     "chatSuggestionIrrigate",
@@ -1261,12 +1263,7 @@ export default function Dashboard() {
       </main>
 
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#D5D1C5] flex items-stretch">
-        {[
-          { id: "sensors", icon: Radio, label: "Sensors" },
-          { id: "pumps", icon: Droplets, label: "Pumps" },
-          { id: "weather", icon: CloudSun, label: "Weather" },
-          { id: "ai", icon: Brain, label: "AI" },
-        ].map((item) => (
+        {mobileNavItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActivePage(item.id)}

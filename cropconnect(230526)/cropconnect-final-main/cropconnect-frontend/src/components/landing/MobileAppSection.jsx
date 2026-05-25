@@ -17,7 +17,7 @@ export default function MobileAppSection() {
     <section
       id="app"
       data-testid="mobile-app-section"
-      className="relative py-20 sm:py-28 overflow-hidden"
+      className="relative py-20 sm:py-28 overflow-hidden bg-[#FDFBF7] border-t border-[#D5D1C5]"
     >
       <div className="mx-auto max-w-7xl px-5 sm:px-8 grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
         <div className="lg:col-span-6 order-2 lg:order-1 relative">
@@ -93,12 +93,12 @@ export default function MobileAppSection() {
             <div className="p-4 rounded-xl bg-[#F4F1EA] border border-[#D5D1C5]">
               <Languages className="w-5 h-5 text-[#1B4332]" />
               <div className="mt-2 font-display text-xl text-[#1A201C]">AI translation</div>
-              <div className="text-xs text-[#1A201C]/60">from backend translator</div>
+              <div className="text-xs text-[#1A201C]/60">Hindi, Marathi, Tamil and more</div>
             </div>
             <div className="p-4 rounded-xl bg-[#F4F1EA] border border-[#D5D1C5]">
               <Smartphone className="w-5 h-5 text-[#E07A5F]" />
               <div className="mt-2 font-display text-xl text-[#1A201C]">Live backend</div>
-              <div className="text-xs text-[#1A201C]/60">demo values until data exists</div>
+              <div className="text-xs text-[#1A201C]/60">streamed from your ESP32 node</div>
             </div>
           </div>
         </div>

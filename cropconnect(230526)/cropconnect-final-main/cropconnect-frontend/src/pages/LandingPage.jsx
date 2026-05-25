@@ -10,7 +10,6 @@ import BenefitsSection from "../components/landing/BenefitsSection";
 import ImpactStats from "../components/landing/ImpactStats";
 import ContactSection from "../components/landing/ContactSection";
 import Footer from "../components/landing/Footer";
-import { LandingLanguageProvider } from "../contexts/AppLanguageContext";
 
 export default function LandingPage() {
   return (
