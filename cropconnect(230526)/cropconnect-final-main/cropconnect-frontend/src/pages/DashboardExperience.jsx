@@ -217,8 +217,30 @@ const emptyMarketData = {
   message: "",
 };
 
+function SidebarNavButton({ item, activePage, setActivePage }) {
+  const isActive = activePage === item.id;
+  return (
+    <button
+      onClick={() => setActivePage(item.id)}
+      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative border-l-[3px] ${
+        isActive
+          ? "bg-[#1B4332] text-[#FDFBF7] font-medium border-[#E07A5F]"
+          : "text-[#4a5548] hover:bg-[#1B4332]/10 hover:text-[#1B4332] border-transparent"
+      }`}
+    >
+      <item.icon className={`w-4 h-4 ${isActive ? "text-[#FDFBF7]" : "text-[#4a5548]"}`} />
+      <span className={`text-sm ${isActive ? "text-[#FDFBF7]" : "text-[#4a5548]"}`}>{item.label}</span>
+      {item.badge && (
+        <span className="ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-[#E07A5F]/20 text-[#E07A5F]">
+          {item.badge}
+        </span>
+      )}
+    </button>
+  );
+}
+
 export default function Dashboard() {
-  const { language: appLanguage, setLanguage: setAppLanguage } = useLandingLanguage();
+  const { language: appLanguage, setLanguage: setAppLanguage, t: appT } = useLandingLanguage();
   const [language, setLanguage] = useState(
     () => localStorage.getItem("cropconnect-language") || "en"
   );
@@ -238,7 +260,10 @@ export default function Dashboard() {
   const isDark = theme === "dark";
   const colors = isDark ? darkColors : lightColors;
   const copy = dashboardCopy.en;
-  const t = (key) => copy[key] || dashboardCopy.en[key] || key;
+  const t = (key) => {
+    const translated = appT(key);
+    return translated !== key ? translated : copy[key] || dashboardCopy.en[key] || key;
+  };
   const chatText = chatCopy.en;
   const ct = (key) => chatText[key] || chatCopy.en[key] || key;
   const { protectedFetch, handleLogout } = useAuth();
@@ -880,6 +905,11 @@ export default function Dashboard() {
     { id: "settings", icon: Settings, label: t("settings") },
     { id: "profile", icon: User, label: t("profile") },
   ];
+  const navCategories = [
+    { label: t("overview"), items: navItems.slice(0, 2) },
+    { label: t("control"), items: navItems.slice(2, 4) },
+    { label: t("intelligence"), items: navItems.slice(4) },
+  ];
   const MOBILE_NAV_IDS = ["sensors", "pump", "weather", "ai"];
   const mobileNavItems = navItems.filter((item) => MOBILE_NAV_IDS.includes(item.id));
 
@@ -1158,37 +1188,19 @@ export default function Dashboard() {
           </div>
 
           <nav className="flex-1 p-3 space-y-1">
-            <div className="mb-4">
-              <p className="text-[10px] uppercase tracking-wider px-3 mb-2" style={{ color: colors.textLight }}>{t("overview")}</p>
-              {navItems.slice(0, 2).map((item) => (
-                <button key={item.id} onClick={() => setActivePage(item.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative border-l-[3px] ${activePage === item.id ? "bg-[#1B4332] text-[#FDFBF7] font-medium border-[#E07A5F]" : "text-[#4a5548] hover:bg-[#1B4332]/10 hover:text-[#1B4332] border-transparent"}`}>
-                  <item.icon className={`w-4 h-4 ${activePage === item.id ? "text-[#FDFBF7]" : "text-[#4a5548]"}`} />
-                  <span className={`text-sm ${activePage === item.id ? "text-[#FDFBF7]" : "text-[#4a5548]"}`}>{item.label}</span>
-                  {item.badge && <span className="ml-auto px-1.5 py-0.5 text-[10px] rounded-full" style={{ background: item.badge === t("live") ? colors.greenLight : colors.terracotta, color: "white" }}>{item.badge}</span>}
-                </button>
-              ))}
-            </div>
-
-            <div className="mb-4">
-              <p className="text-[10px] uppercase tracking-wider px-3 mb-2" style={{ color: colors.textLight }}>{t("control")}</p>
-              {navItems.slice(2, 4).map((item) => (
-                <button key={item.id} onClick={() => setActivePage(item.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative border-l-[3px] ${activePage === item.id ? "bg-[#1B4332] text-[#FDFBF7] font-medium border-[#E07A5F]" : "text-[#4a5548] hover:bg-[#1B4332]/10 hover:text-[#1B4332] border-transparent"}`}>
-                  <item.icon className={`w-4 h-4 ${activePage === item.id ? "text-[#FDFBF7]" : "text-[#4a5548]"}`} />
-                  <span className={`text-sm ${activePage === item.id ? "text-[#FDFBF7]" : "text-[#4a5548]"}`}>{item.label}</span>
-                </button>
-              ))}
-            </div>
-
-            <div>
-              <p className="text-[10px] uppercase tracking-wider px-3 mb-2" style={{ color: colors.textLight }}>{t("intelligence")}</p>
-              {navItems.slice(4).map((item) => (
-                <button key={item.id} onClick={() => setActivePage(item.id)} className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative border-l-[3px] ${activePage === item.id ? "bg-[#1B4332] text-[#FDFBF7] font-medium border-[#E07A5F]" : "text-[#4a5548] hover:bg-[#1B4332]/10 hover:text-[#1B4332] border-transparent"}`}>
-                  <item.icon className={`w-4 h-4 ${activePage === item.id ? "text-[#FDFBF7]" : "text-[#4a5548]"}`} />
-                  <span className={`text-sm ${activePage === item.id ? "text-[#FDFBF7]" : "text-[#4a5548]"}`}>{item.label}</span>
-                  {item.badge && <span className="ml-auto px-1.5 py-0.5 text-[10px] rounded-full" style={{ background: colors.terracotta, color: "white" }}>{item.badge}</span>}
-                </button>
-              ))}
-            </div>
+            {navCategories.map(({ label, items }) => (
+              <div key={label} className="mb-4 last:mb-0">
+                <p className="text-[10px] uppercase tracking-wider px-3 mb-2" style={{ color: colors.textLight }}>{label}</p>
+                {items.map((item) => (
+                  <SidebarNavButton
+                    key={item.id}
+                    item={item}
+                    activePage={activePage}
+                    setActivePage={setActivePage}
+                  />
+                ))}
+              </div>
+            ))}
           </nav>
 
           <div className="p-3 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
@@ -1259,7 +1271,11 @@ export default function Dashboard() {
           </div>
         </header>
 
-        <div className="p-3 sm:p-5 md:p-6 pt-[80px] md:pt-[80px] pb-16 sm:pb-0">{renderPage()}</div>
+        <div className="p-3 sm:p-5 md:p-6 pt-20 pb-20 sm:pb-4 md:pb-6">
+          <div key={activePage} className="page-fade">
+            {renderPage()}
+          </div>
+        </div>
       </main>
 
       <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#D5D1C5] flex items-stretch">

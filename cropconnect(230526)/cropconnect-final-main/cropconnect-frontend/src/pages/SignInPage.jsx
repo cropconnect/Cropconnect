@@ -12,6 +12,19 @@ import { INDIA_STATES, getDistrictOptions, getPlaceOptions } from "../lib/indiaL
 const locationSelectClass =
   "h-10 w-full rounded-md border border-[#D5D1C5] bg-[#FDFBF7] pl-10 pr-8 text-base text-[#1A201C] shadow-sm focus:border-[#1B4332] focus:outline-none focus:ring-2 focus:ring-[#1B4332]/20 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
 
+function getPasswordStrength(password) {
+  if (!password) return { score: 0, label: "", color: "" };
+  let score = 0;
+  if (password.length >= 8) score++;
+  if (password.length >= 12) score++;
+  if (/[A-Z]/.test(password)) score++;
+  if (/[0-9]/.test(password)) score++;
+  if (/[^A-Za-z0-9]/.test(password)) score++;
+  if (score <= 1) return { score, label: "Weak", color: "bg-red-400" };
+  if (score <= 3) return { score, label: "Fair", color: "bg-amber-400" };
+  return { score, label: "Strong", color: "bg-green-500" };
+}
+
 export default function SignInPage() {
   const navigate = useNavigate();
   const [showPassword, setShowPassword] = useState(false);
@@ -36,6 +49,7 @@ export default function SignInPage() {
     [formData.state, formData.district]
   );
   const locationFieldName = formData.locationType === "city" ? "city" : "village";
+  const strength = getPasswordStrength(formData.password);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -242,6 +256,21 @@ export default function SignInPage() {
                   )}
                 </button>
               </div>
+              {formData.password && (
+                <div className="mt-2 space-y-1">
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((level) => (
+                      <div
+                        key={level}
+                        className={`h-1 flex-1 rounded-full transition-colors duration-200 ${
+                          strength.score >= level ? strength.color : "bg-[#E8E4D7]"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <p className="text-xs text-[#1A201C]/50">{strength.label} password</p>
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">

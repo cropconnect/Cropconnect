@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import Header from "../components/landing/Header";
 import Hero from "../components/landing/Hero";
 import PrototypeSection from "../components/landing/PrototypeSection";
@@ -12,6 +13,10 @@ import ContactSection from "../components/landing/ContactSection";
 import Footer from "../components/landing/Footer";
 
 export default function LandingPage() {
+  useEffect(() => {
+    document.title = "CropConnect - Smart Farming Dashboard";
+  }, []);
+
   return (
     <div data-testid="landing-page" className="relative">
       <Header />

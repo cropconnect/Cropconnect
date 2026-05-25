@@ -368,8 +368,7 @@ export function LandingLanguageProvider({ children }) {
 
   const value = useMemo(() => {
     const t = (key) => {
-      const englishValue = translations.en[key] || key;
-      return englishValue;
+      return translations[language]?.[key] ?? translations.en[key] ?? key;
     };
 
     return {

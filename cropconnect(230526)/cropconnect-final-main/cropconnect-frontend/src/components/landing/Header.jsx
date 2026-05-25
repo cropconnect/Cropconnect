@@ -8,6 +8,7 @@ import { useLandingLanguage } from "../../contexts/AppLanguageContext";
 export default function Header() {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [scrollProgress, setScrollProgress] = useState(0);
   const { language, setLanguage, t } = useLandingLanguage();
   const links = [
     { id: "prototype", label: t("nav")[0] },
@@ -19,7 +20,12 @@ export default function Header() {
   ];
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 20);
+    const onScroll = () => {
+      const scrollTop = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      setScrollProgress(docHeight > 0 ? (scrollTop / docHeight) * 100 : 0);
+      setScrolled(window.scrollY > 20);
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -40,6 +46,11 @@ export default function Header() {
           : "bg-transparent"
       }`}
     >
+      <div
+        className="absolute bottom-0 left-0 h-[2px] bg-[#E07A5F] transition-all duration-100 ease-linear"
+        style={{ width: `${scrollProgress}%` }}
+        aria-hidden
+      />
       <div className="mx-auto max-w-7xl px-5 sm:px-8 h-16 flex items-center justify-between">
         <a
           href="#top"
