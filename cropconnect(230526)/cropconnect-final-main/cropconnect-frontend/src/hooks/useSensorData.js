@@ -27,6 +27,7 @@ export function useSensorData({ protectedFetch, sensorDeviceId, pollIntervalMs }
   });
   const [telemetryPacket, setTelemetryPacket] = useState({});
   const [apiLogs, setApiLogs] = useState([]);
+  const [sensorHistory, setSensorHistory] = useState([]);
 
   const addApiLog = useCallback((type, message) => {
     setApiLogs((prev) => [
@@ -98,6 +99,19 @@ export function useSensorData({ protectedFetch, sensorDeviceId, pollIntervalMs }
     return true;
   }, [sensorDeviceId]);
 
+  const loadSensorHistory = useCallback(async () => {
+    if (!sensorDeviceId) return;
+    try {
+      const response = await protectedFetch(`${API}/sensors/history?device_id=${encodeURIComponent(sensorDeviceId)}&limit=48`);
+      if (!response.ok) return;
+      const data = await response.json().catch(() => ({}));
+      const items = Array.isArray(data.items) ? [...data.items].reverse() : [];
+      setSensorHistory(items);
+    } catch {
+      // History is non-critical; latest sensor polling still drives dashboard values.
+    }
+  }, [protectedFetch, sensorDeviceId]);
+
   useEffect(() => {
     let cancelled = false;
     const primaryDeviceId = sensorDeviceId || "";
@@ -160,6 +174,16 @@ export function useSensorData({ protectedFetch, sensorDeviceId, pollIntervalMs }
   }, [addApiLog, applyBackendReadings, pollIntervalMs, protectedFetch, sensorDeviceId]);
 
   useEffect(() => {
+    if (!sensorDeviceId) {
+      setSensorHistory([]);
+      return undefined;
+    }
+    loadSensorHistory();
+    const interval = setInterval(loadSensorHistory, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [loadSensorHistory, sensorDeviceId]);
+
+  useEffect(() => {
     setTelemetryPacket({
       timestamp: new Date().toISOString(),
       node_id: sensorConnection.deviceId,
@@ -180,6 +204,8 @@ export function useSensorData({ protectedFetch, sensorDeviceId, pollIntervalMs }
     sensorConnection,
     setSensorConnection,
     telemetryPacket,
+    sensorHistory,
+    loadSensorHistory,
     apiLogs,
     setApiLogs,
     applyBackendReadings,

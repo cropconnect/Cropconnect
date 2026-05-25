@@ -22,6 +22,23 @@ from routers import sensors as sensors_router
 from routers import weather as weather_router
 from services.auth_service import AUTH_COOKIE_NAME, CSRF_COOKIE_NAME
 
+_sentry_dsn = os.environ.get("SENTRY_DSN", "").strip()
+if _sentry_dsn:
+    import sentry_sdk
+    from sentry_sdk.integrations.fastapi import FastApiIntegration
+    from sentry_sdk.integrations.starlette import StarletteIntegration
+
+    sentry_sdk.init(
+        dsn=_sentry_dsn,
+        environment=os.environ.get("RAILWAY_ENVIRONMENT", "development"),
+        traces_sample_rate=0.05,
+        integrations=[
+            StarletteIntegration(),
+            FastApiIntegration(),
+        ],
+        before_send=lambda event, hint: event,
+    )
+
 if settings.mysql_public_url:
     _mysql_url = urlparse(settings.mysql_public_url)
     DB_CONFIG = {

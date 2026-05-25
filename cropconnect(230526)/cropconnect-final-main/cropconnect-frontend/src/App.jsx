@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-route
 import { Toaster } from "sonner";
 import { API, AUTH_CACHE_KEY, authHeaders, readAuthToken, readSessionUser } from "./lib/api";
 
+import OfflineBanner from "./components/OfflineBanner";
 import { LandingLanguageProvider } from "./contexts/AppLanguageContext";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
@@ -85,6 +86,7 @@ function App() {
   return (
     <div className="App grain" data-auto-translate-root="true">
       <LandingLanguageProvider>
+        <OfflineBanner />
         <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#FDFBF7] px-4 text-sm font-medium text-[#1B4332]">Loading...</div>}>
             <Routes>

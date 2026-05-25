@@ -49,9 +49,10 @@ export GOOGLE_CSE_ID=your_google_cse_id
 export DATA_GOV_API_KEY=your_data_gov_api_key
 export DATA_GOV_MARKET_RESOURCE_URL=https://api.data.gov.in/resource/current-daily-price-various-commodities-various-markets-mandi
 export MARKET_PRICE_LIMIT=100
+export SENTRY_DSN=
 ```
 
-`MYSQL_DATABASE` is the single CropConnect schema; account, sensor, pump, chat, and rate-limit tables all live there. `MYSQL_PASSWORD`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_CSE_ID`, and `DATA_GOV_API_KEY` are private values. Keep them out of screenshots and commits. Local migrations cannot run until `MYSQL_PASSWORD` matches your local MySQL account. AI chat and crop planning cannot answer until `GEMINI_API_KEY` is set. Live market prices cannot load until `DATA_GOV_API_KEY` is set.
+`MYSQL_DATABASE` is the single CropConnect schema; account, sensor, pump, chat, and rate-limit tables all live there. `MYSQL_PASSWORD`, `GEMINI_API_KEY`, `GOOGLE_API_KEY`, `GOOGLE_CSE_ID`, and `DATA_GOV_API_KEY` are private values. Keep them out of screenshots and commits. Local migrations cannot run until `MYSQL_PASSWORD` matches your local MySQL account. AI chat and crop planning cannot answer until `GEMINI_API_KEY` is set. Live market prices cannot load until `DATA_GOV_API_KEY` is set. Optional: set `SENTRY_DSN` for error monitoring.
 
 Run:
 

@@ -311,6 +311,7 @@ export default function Dashboard() {
     sensorConnection,
     setSensorConnection,
     telemetryPacket,
+    sensorHistory,
     apiLogs,
     applyBackendReadings,
   } = useSensorData({
@@ -982,6 +983,7 @@ export default function Dashboard() {
     sensorApiKeyLoading,
     sensorConnection,
     sensorData,
+    sensorHistory,
     sensorDeviceId,
     sensorIngestUrl,
     sensorSetupForm,

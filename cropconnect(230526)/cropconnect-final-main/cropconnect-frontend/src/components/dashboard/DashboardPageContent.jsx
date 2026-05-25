@@ -77,6 +77,7 @@ export default function DashboardPageContent({ ctx }) {
     sensorApiKeyLoading,
     sensorConnection,
     sensorData,
+    sensorHistory,
     sensorDeviceId,
     sensorIngestUrl,
     sensorSetupForm,
@@ -116,12 +117,22 @@ export default function DashboardPageContent({ ctx }) {
         </div>
       );
     }
-    const max = Math.max(...data);
-    const min = Math.min(...data);
+    const values = data
+      .map((item) => typeof item === "number" ? item : item?.value)
+      .filter((value) => Number.isFinite(value));
+    if (values.length < 2) {
+      return (
+        <div className="flex items-center justify-center text-sm" style={{ height, color: colors.textLight }}>
+          {EMPTY_DISPLAY}
+        </div>
+      );
+    }
+    const max = Math.max(...values);
+    const min = Math.min(...values);
     const range = max - min || 1;
-    const points = data.map((v, i) => ({
-      x: (i / (data.length - 1)) * 100,
-      y: 100 - ((v - min) / range) * 80 - 10,
+    const points = values.map((value, i) => ({
+      x: (i / (values.length - 1)) * 100,
+      y: 100 - ((value - min) / range) * 80 - 10,
     }));
     const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"} ${p.x} ${p.y}`).join(" ");
     const areaD = `${pathD} L 100 100 L 0 100 Z`;
@@ -208,7 +219,7 @@ export default function DashboardPageContent({ ctx }) {
     const numericProgress = numericOrNull(progress);
 
     return (
-      <div className={`relative p-4 rounded-xl bg-white border ${style.border} shadow-sm overflow-hidden`}>
+      <div className={`relative p-4 rounded-xl border ${style.border} shadow-sm overflow-hidden`} style={{ background: colors.cream }}>
         <div className="absolute -right-4 -top-4 w-16 h-16 rounded-full opacity-8" style={{ background: style.fill }} />
         <div className="flex items-start justify-between">
           <div className={`p-2 rounded-lg ${style.bg}`}>
@@ -245,7 +256,7 @@ export default function DashboardPageContent({ ctx }) {
     ].filter(Boolean).join(", ");
 
     return (
-      <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm flex flex-col gap-4">
+      <div className="p-5 rounded-xl border shadow-sm flex flex-col gap-4" style={{ background: colors.cream, borderColor: colors.creamDark }}>
         <h3 className="font-semibold" style={{ color: colors.textDark }}>Farm Location</h3>
         {location ? (
           <>
@@ -344,19 +355,32 @@ export default function DashboardPageContent({ ctx }) {
             {/* Field Map and Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <FarmLocationCard userData={userData} colors={colors} displayValue={displayValue} />
-              <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">
+              <div className="p-5 rounded-xl border shadow-sm" style={{ background: colors.cream, borderColor: colors.creamDark }}>
                 <h3 className="font-semibold mb-4" style={{ color: colors.textDark }}>Moisture Trend (24h)</h3>
-                <MoistureTrendEmptyState />
+                {sensorHistory.length > 0 ? (
+                  <LineChart
+                    data={sensorHistory
+                      .map((reading) => ({
+                        value: reading.soil_moisture ?? null,
+                        label: reading.recorded_at ? new Date(reading.recorded_at).toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }) : "",
+                      }))
+                      .filter((reading) => reading.value !== null)}
+                    color={colors.greenLight}
+                    height={200}
+                  />
+                ) : (
+                  <MoistureTrendEmptyState />
+                )}
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">
+              <div className="p-5 rounded-xl border shadow-sm" style={{ background: colors.cream, borderColor: colors.creamDark }}>
                 <h3 className="font-semibold mb-4" style={{ color: colors.textDark }}>Active Alerts</h3>
                 <ActiveAlertsEmptyState />
               </div>
 
-              <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">
+              <div className="p-5 rounded-xl border shadow-sm" style={{ background: colors.cream, borderColor: colors.creamDark }}>
                 <h3 className="font-semibold mb-4" style={{ color: colors.textDark }}>Crop Health Score</h3>
                 <CropHealthEmptyState />
               </div>

@@ -1,7 +1,7 @@
 import { toast } from "sonner";
 import { INDIA_STATES, getDistrictOptions, getPlaceOptions } from "../../lib/indiaLocations";
 
-const profileSelectClass = "min-w-[190px] max-w-[260px] rounded border border-gray-300 bg-white px-3 py-1 text-right";
+const profileSelectClass = "min-w-[190px] max-w-[260px] rounded border border-gray-300 px-3 py-1 text-right";
 
 export default function ProfileSection({ ctx }) {
   const {
@@ -124,7 +124,7 @@ export default function ProfileSection({ ctx }) {
                     value={editData.state || ""}
                     onChange={(event) => handleProfileFieldChange("state", event.target.value)}
                     className={profileSelectClass}
-                    style={{ color: colors.textMid }}
+                    style={{ background: colors.cream, color: colors.textDark }}
                   >
                     <option value="">Select state</option>
                     {INDIA_STATES.map((state) => (
@@ -138,7 +138,7 @@ export default function ProfileSection({ ctx }) {
                     value={editLocationType}
                     onChange={(event) => handleProfileFieldChange("locationType", event.target.value)}
                     className={profileSelectClass}
-                    style={{ color: colors.textMid }}
+                    style={{ background: colors.cream, color: colors.textDark }}
                   >
                     <option value="city">City</option>
                     <option value="village">Village</option>
@@ -149,7 +149,7 @@ export default function ProfileSection({ ctx }) {
                     onChange={(event) => handleProfileFieldChange("district", event.target.value)}
                     disabled={!editState}
                     className={`${profileSelectClass} disabled:opacity-50`}
-                    style={{ color: colors.textMid }}
+                    style={{ background: colors.cream, color: colors.textDark }}
                   >
                     <option value="">{editState ? "Select district" : "Select state first"}</option>
                     {profileDistrictOptions.map((district) => (
@@ -164,7 +164,7 @@ export default function ProfileSection({ ctx }) {
                     onChange={(event) => handleProfileFieldChange(field.key, event.target.value)}
                     disabled={!editDistrict}
                     className={`${profileSelectClass} disabled:opacity-50`}
-                    style={{ color: colors.textMid }}
+                    style={{ background: colors.cream, color: colors.textDark }}
                   >
                     <option value="">{editDistrict ? `Select ${field.label.toLowerCase()}` : "Select district first"}</option>
                     {profilePlaceOptions.map((place) => (
