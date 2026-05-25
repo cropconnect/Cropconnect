@@ -1,10 +1,10 @@
 @echo off
-cd /d "%~dp0"
+cd /d "%~dp0.."
 if "%1"=="" goto :usage
 if "%2"=="" (
-    python control_pump.py %1
+    python scripts\control_pump.py %1
 ) else (
-    python control_pump.py %1 %2
+    python scripts\control_pump.py %1 %2
 )
 goto :eof
 

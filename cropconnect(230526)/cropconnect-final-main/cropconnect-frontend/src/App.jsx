@@ -68,7 +68,7 @@ export function ProtectedPage({ children }) {
 
   if (authState === "checking") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F7F3EA] px-4 text-sm font-semibold text-[#31572C]">
+      <div className="flex min-h-screen items-center justify-center bg-[#FDFBF7] px-4 text-sm font-medium text-[#1B4332]">
         Checking session...
       </div>
     );
@@ -86,7 +86,7 @@ function App() {
     <div className="App grain" data-auto-translate-root="true">
       <LandingLanguageProvider>
         <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
-          <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#F7F3EA] px-4 text-sm font-semibold text-[#31572C]">Loading...</div>}>
+          <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#FDFBF7] px-4 text-sm font-medium text-[#1B4332]">Loading...</div>}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />

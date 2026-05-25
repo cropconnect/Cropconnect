@@ -5,7 +5,7 @@ REM This script starts both backend and frontend servers
 cd /d "%~dp0"
 
 REM Start backend in a new window
-start "CropConnect Backend" cmd /k ""%~dp0cropconnect-backend\run-backend.cmd""
+start "CropConnect Backend" cmd /k ""%~dp0cropconnect-backend\scripts\run-backend.cmd""
 
 REM Wait a moment for backend to start
 timeout /t 3 /nobreak

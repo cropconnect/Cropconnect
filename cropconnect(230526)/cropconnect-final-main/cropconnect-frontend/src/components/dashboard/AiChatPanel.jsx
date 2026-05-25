@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Mic, MicOff, Send } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -37,6 +38,12 @@ export default function AiChatPanel({
   stopListening,
   language,
 }) {
+  useEffect(() => {
+    return () => {
+      if (isListening) stopListening();
+    };
+  }, [isListening, stopListening]);
+
   return (
     <div className="space-y-6">
       <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">

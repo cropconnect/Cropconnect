@@ -77,7 +77,7 @@ export default function ProfileSection({ ctx }) {
 
   return (
     <div className="space-y-6">
-      <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">
+      <div className="p-5 rounded-xl border shadow-sm" style={{ background: colors.cream, borderColor: colors.creamDark }}>
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-4">
             <div className="w-20 h-20 rounded-full flex items-center justify-center text-2xl font-bold" style={{ background: colors.greenDark, color: "white" }}>
@@ -190,7 +190,7 @@ export default function ProfileSection({ ctx }) {
         </div>
       </div>
 
-      <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">
+      <div className="p-5 rounded-xl border shadow-sm" style={{ background: colors.cream, borderColor: colors.creamDark }}>
         <h3 className="font-semibold mb-4" style={{ color: colors.textDark }}>Farm Statistics</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="p-4 rounded-lg" style={{ background: colors.cream }}>
@@ -212,7 +212,7 @@ export default function ProfileSection({ ctx }) {
         </div>
       </div>
 
-      <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">
+      <div className="p-5 rounded-xl border shadow-sm" style={{ background: colors.cream, borderColor: colors.creamDark }}>
         <h3 className="font-semibold mb-4" style={{ color: colors.textDark }}>Zone Details</h3>
         <div className="space-y-3">
           {[

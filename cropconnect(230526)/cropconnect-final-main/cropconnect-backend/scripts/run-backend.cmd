@@ -1,6 +1,6 @@
 @echo off
-cd /d "%~dp0"
-set "PYTHON_EXE=%~dp0.venv\Scripts\python.exe"
+cd /d "%~dp0.."
+set "PYTHON_EXE=%CD%\.venv\Scripts\python.exe"
 
 if not exist "%PYTHON_EXE%" (
   echo Python was not found at %PYTHON_EXE%.

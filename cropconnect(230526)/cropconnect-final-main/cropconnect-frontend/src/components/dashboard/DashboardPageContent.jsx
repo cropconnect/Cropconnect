@@ -4,7 +4,6 @@ import {
   CloudSun,
   Droplets,
   LayoutDashboard,
-  MapPin,
   Radio,
   Sprout,
   TrendingDown,
@@ -238,68 +237,81 @@ export default function DashboardPageContent({ ctx }) {
     );
   };
 
-  // Field Map Component
-  const FieldMap = () => {
-    const zoneHasAlert = (zoneName) => activeSensorAlerts.some((alert) => alert.zone === zoneName);
+  const FarmLocationCard = ({ userData, colors, displayValue }) => {
+    const location = [
+      userData.village || userData.city,
+      userData.district,
+      userData.state,
+    ].filter(Boolean).join(", ");
 
     return (
-      <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="font-semibold" style={{ color: colors.textDark }}>Field Map</h3>
-          <span className="text-xs px-2 py-1 rounded-full bg-green-50 text-green-600">{displayValue(userData.landSize, " acres")}</span>
-        </div>
-        <div className="relative rounded-xl overflow-hidden" style={{ height: 280, background: `linear-gradient(135deg, #1a472a, #2d5a3d)` }}>
-          {/* Simulated field map with zones */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="grid grid-cols-3 gap-2 p-4 w-full h-full">
-              {/* Zone A */}
-              <div className="relative rounded-lg overflow-hidden" style={{ background: "#4a8a5a", gridColumn: "span 2" }}>
-                <div className="absolute top-2 left-2 text-white text-xs font-medium">Zone A - {userData.zoneA || "Crop"}</div>
-                <div className="absolute bottom-2 left-2 text-white/70 text-xs">{displayValue(cropZones[0]?.area)}</div>
-                <div className="absolute top-2 right-2">
-                  {zoneHasAlert("Zone A") ? <AlertTriangle className="w-4 h-4 text-amber-300" /> : <Droplets className="w-4 h-4 text-green-200" />}
-                </div>
-                {/* Simulated crop rows */}
-                <div className="absolute inset-0 flex flex-col justify-around p-4">
-                  {[88, 92, 84, 90, 86].map((width, i) => (
-                    <div key={i} className="h-0.5 bg-green-300/30 rounded-full" style={{ width: `${width}%` }} />
-                  ))}
-                </div>
+      <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm flex flex-col gap-4">
+        <h3 className="font-semibold" style={{ color: colors.textDark }}>Farm Location</h3>
+        {location ? (
+          <>
+            <div className="flex items-center gap-2">
+              <div className="w-9 h-9 rounded-full bg-[#EDF6F0] flex items-center justify-center">
+                <span className="text-[#1B4332] text-base">Pin</span>
               </div>
-              {/* Zone B - Vegetables */}
-              <div className="relative rounded-lg overflow-hidden" style={{ background: "#3a7a4a" }}>
-                <div className="absolute top-2 left-2 text-white text-xs font-medium">Zone B - {userData.zoneB || "Crop"}</div>
-                <div className="absolute bottom-2 left-2 text-white/70 text-xs">{displayValue(cropZones[1]?.area)}</div>
-                <div className="absolute top-2 right-2">
-                  {zoneHasAlert("Zone B") ? <AlertTriangle className="w-4 h-4 text-amber-300" /> : <Droplets className="w-4 h-4 text-green-200" />}
-                </div>
-              </div>
-              {/* Zone C */}
-              <div className="relative rounded-lg overflow-hidden" style={{ background: "#5a9a5a" }}>
-                <div className="absolute top-2 left-2 text-white text-xs font-medium">Zone C - {userData.zoneC || "Crop"}</div>
-                <div className="absolute bottom-2 left-2 text-white/70 text-xs">{displayValue(cropZones[2]?.area)}</div>
-                <div className="absolute top-2 right-2">
-                  {zoneHasAlert("Zone C") ? <AlertTriangle className="w-4 h-4 text-amber-300" /> : null}
-                </div>
-              </div>
-              {/* Water body */}
-              <div className="relative rounded-lg overflow-hidden" style={{ background: "#2a6aaa", gridColumn: "span 2" }}>
-                <div className="absolute top-2 left-2 text-white/80 text-xs font-medium">Water Body</div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <Droplets className="w-6 h-6 text-blue-200/50" />
-                </div>
+              <div>
+                <p className="text-sm font-medium" style={{ color: colors.textDark }}>{location}</p>
+                <p className="text-xs" style={{ color: colors.textLight }}>
+                  {displayValue(userData.landSize, " acres")} farm
+                </p>
               </div>
             </div>
-          </div>
-          {/* Location badge */}
-          <div className="absolute bottom-4 right-4 flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 backdrop-blur-sm">
-            <MapPin className="w-4 h-4 text-white" />
-            <span className="text-white text-xs">{userData.locationType === "city" ? userData.city : userData.village}, {userData.state}</span>
-          </div>
-        </div>
+            <a
+              href={`https://maps.google.com/?q=${encodeURIComponent(location)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs underline"
+              style={{ color: colors.textLight }}
+            >
+              View on Google Maps -&gt;
+            </a>
+          </>
+        ) : (
+          <p className="text-sm" style={{ color: colors.textLight }}>
+            Add your farm location in Profile to see it here.
+          </p>
+        )}
       </div>
     );
   };
+
+  const MoistureTrendEmptyState = () => (
+    <div className="h-[200px] flex flex-col items-center justify-center gap-2 text-center">
+      <div className="w-12 h-12 rounded-full bg-[#F4F1EA] flex items-center justify-center">
+        <span className="text-xl">Chart</span>
+      </div>
+      <p className="text-sm" style={{ color: colors.textLight }}>
+        Historical trend data will appear here once the backend collects readings over time.
+      </p>
+    </div>
+  );
+
+  const ActiveAlertsEmptyState = () => (
+    <div className="space-y-2">
+      <div className="flex items-center gap-2 text-sm py-3 px-2 rounded-lg bg-green-50 border border-green-100 text-green-700">
+        <span>OK</span>
+        <span>No active alerts - all readings are within safe range.</span>
+      </div>
+      <p className="text-xs px-2" style={{ color: colors.textLight }}>
+        Alerts appear here when sensor values cross crop safety thresholds.
+      </p>
+    </div>
+  );
+
+  const CropHealthEmptyState = () => (
+    <div className="flex flex-col items-center justify-center py-6 gap-2 text-center">
+      <div className="w-16 h-16 rounded-full bg-[#F4F1EA] flex items-center justify-center text-2xl font-display text-[#1B4332]/40">
+        --
+      </div>
+      <p className="text-sm" style={{ color: colors.textLight }}>
+        Health score will appear once live sensor data is received from your field node.
+      </p>
+    </div>
+  );
 
   // Render active page content
   const renderPage = () => {
@@ -331,22 +343,22 @@ export default function DashboardPageContent({ ctx }) {
 
             {/* Field Map and Charts Row */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <FieldMap />
+              <FarmLocationCard userData={userData} colors={colors} displayValue={displayValue} />
               <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">
                 <h3 className="font-semibold mb-4" style={{ color: colors.textDark }}>Moisture Trend (24h)</h3>
-                <LineChart data={[]}  color={colors.greenLight} height={200} />
+                <MoistureTrendEmptyState />
               </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">
                 <h3 className="font-semibold mb-4" style={{ color: colors.textDark }}>Active Alerts</h3>
-                <div className="p-6 text-center text-sm" style={{ color: colors.textLight }}>{EMPTY_DISPLAY}</div>
+                <ActiveAlertsEmptyState />
               </div>
 
               <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">
                 <h3 className="font-semibold mb-4" style={{ color: colors.textDark }}>Crop Health Score</h3>
-                <div className="p-6 text-center text-sm" style={{ color: colors.textLight }}>{EMPTY_DISPLAY}</div>
+                <CropHealthEmptyState />
               </div>
             </div>
           </div>

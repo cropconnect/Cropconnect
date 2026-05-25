@@ -69,7 +69,7 @@ python -m unittest discover -s tests
 On Windows after setup, you can also run:
 
 ```text
-run-tests.cmd
+scripts\run-tests.cmd
 ```
 
 Frontend `.env` should use:

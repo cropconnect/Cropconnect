@@ -8,10 +8,13 @@ to the pump ESP32.
 """
 import json
 import os
+import sys
 import urllib.error
 import urllib.request
+from pathlib import Path
 
-from logging_config import configure_logging
+sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from logging_config import configure_logging  # noqa: E402
 
 logger = configure_logging()
 
