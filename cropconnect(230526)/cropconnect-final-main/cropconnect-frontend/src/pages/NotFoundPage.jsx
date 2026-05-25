@@ -1,9 +1,19 @@
 import { Link } from "react-router-dom";
-import { Home, ArrowLeft, Search } from "lucide-react";
+import { Home, ArrowLeft, Search, Leaf } from "lucide-react";
 
 export default function NotFoundPage() {
   return (
-    <div className="min-h-screen bg-[#F7F3EA] flex items-center justify-center px-4">
+    <div className="relative min-h-screen bg-[#FDFBF7] flex items-center justify-center px-4">
+      <div className="absolute top-6 left-6">
+        <Link to="/" className="inline-flex items-center gap-2">
+          <span className="inline-flex items-center justify-center w-8 h-8 rounded-full bg-[#1B4332] text-[#FDFBF7]">
+            <Leaf className="w-3.5 h-3.5" strokeWidth={2.5} />
+          </span>
+          <span className="font-display text-lg text-[#1A201C] tracking-tight">
+            Crop<span className="text-[#1B4332]">Connect</span>
+          </span>
+        </Link>
+      </div>
       <div className="text-center max-w-lg">
         {/* Animated 404 Number */}
         <div className="relative mb-6">

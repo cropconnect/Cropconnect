@@ -184,6 +184,12 @@ const chatCopy = {
 const ALERT_TOAST_INTERVAL_MS = 60000;
 const SENSOR_POLL_INTERVAL_MS = 15000;
 const SNAPSHOT_SAVE_INTERVAL_MS = 5 * 60 * 1000;
+const NAV_GROUPS = {
+  overview: ["dashboard", "sensors", "weather", "notifications"],
+  control: ["pump", "market"],
+  intelligence: ["cropPlanner", "flow", "ai", "settings", "profile"],
+};
+
 const buildSensorAlerts = (data = {}, connection = {}) => {
   if (connection.source !== "esp32") return [];
   const alerts = [];
@@ -906,9 +912,9 @@ export default function Dashboard() {
     { id: "profile", icon: User, label: t("profile") },
   ];
   const navCategories = [
-    { label: t("overview"), items: navItems.slice(0, 2) },
-    { label: t("control"), items: navItems.slice(2, 4) },
-    { label: t("intelligence"), items: navItems.slice(4) },
+    { label: t("overview"), items: navItems.filter((item) => NAV_GROUPS.overview.includes(item.id)) },
+    { label: t("control"), items: navItems.filter((item) => NAV_GROUPS.control.includes(item.id)) },
+    { label: t("intelligence"), items: navItems.filter((item) => NAV_GROUPS.intelligence.includes(item.id)) },
   ];
   const MOBILE_NAV_IDS = ["sensors", "pump", "weather", "ai"];
   const mobileNavItems = navItems.filter((item) => MOBILE_NAV_IDS.includes(item.id));

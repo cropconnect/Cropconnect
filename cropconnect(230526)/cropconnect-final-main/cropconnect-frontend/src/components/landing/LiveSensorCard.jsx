@@ -21,7 +21,7 @@ const META = {
 const ORDER = ["soil_moisture", "temperature", "humidity", "ph"];
 const DEMO_READINGS = [
   { sensor_type: "soil_moisture", value: 42, unit: "%" },
-  { sensor_type: "temperature", value: 28, unit: "C" },
+  { sensor_type: "temperature", value: 28, unit: "\u00b0C" },
   { sensor_type: "humidity", value: 64, unit: "%" },
   { sensor_type: "ph", value: 6.7, unit: "" },
 ];

@@ -232,3 +232,11 @@ body {
     from { opacity: 0; transform: translateY(6px); }
     to { opacity: 1; transform: translateY(0); }
 }
+
+.skip-link:focus {
+    clip: auto;
+    clip-path: none;
+    white-space: normal;
+    width: auto;
+    height: auto;
+}

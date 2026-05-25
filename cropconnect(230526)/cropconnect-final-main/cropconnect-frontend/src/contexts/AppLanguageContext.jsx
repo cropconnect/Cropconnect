@@ -262,6 +262,7 @@ export function LandingLanguageProvider({ children }) {
   const [language, setLanguage] = useState(
     () => localStorage.getItem("cropconnect-language") || "en"
   );
+  const cacheWriteTimer = useRef(null);
 
   useEffect(() => {
     const handleLanguageChange = (event) => {
@@ -284,9 +285,16 @@ export function LandingLanguageProvider({ children }) {
     }
   });
 
-  // Persist cache to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem(TRANSLATION_CACHE_STORAGE_KEY, JSON.stringify(cache));
+    window.clearTimeout(cacheWriteTimer.current);
+    cacheWriteTimer.current = window.setTimeout(() => {
+      try {
+        localStorage.setItem(TRANSLATION_CACHE_STORAGE_KEY, JSON.stringify(cache));
+      } catch {
+        // localStorage can be full or unavailable on some mobile browsers.
+      }
+    }, 2000);
+    return () => window.clearTimeout(cacheWriteTimer.current);
   }, [cache]);
 
   const translateText = useCallback(async (text, targetLang = language) => {
