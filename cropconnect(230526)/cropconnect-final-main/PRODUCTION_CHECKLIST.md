@@ -1,5 +1,15 @@
 # CropConnect Production Checklist
 
+## Code quality (all automated — no manual steps needed)
+
+- [x] sharp added to devDependencies; generate-icons script registered in package.json
+- [x] Sentry replayIntegration added; replaysOnErrorSampleRate warning resolved
+- [x] docker-compose.yml documented as local-dev-only with danger warning block
+- [x] .env.docker.example created with all required vars listed
+- [x] DashboardContext extracted; DashboardExperience.jsx trimmed to <300 lines
+- [x] CI generates PWA icons on clean environments before build
+- [x] CI validates environment config before backend tests run
+
 ## Secrets
 
 - [ ] CROP_DATA_SECRET_KEY is a fresh randomly generated 32+ character string

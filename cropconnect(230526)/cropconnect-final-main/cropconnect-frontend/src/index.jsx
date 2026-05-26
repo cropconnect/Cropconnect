@@ -13,6 +13,11 @@ if (import.meta.env.VITE_SENTRY_DSN) {
     replaysSessionSampleRate: 0,
     integrations: [
       Sentry.browserTracingIntegration(),
+      Sentry.replayIntegration({
+        // Mask all text and inputs to avoid capturing sensitive farm credentials or sensor keys.
+        maskAllText: true,
+        blockAllMedia: false,
+      }),
     ],
     beforeSend(event) {
       if (event.user) {

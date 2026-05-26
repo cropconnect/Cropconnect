@@ -8,6 +8,7 @@ cropconnect-frontend/build/
 dist/
 *.log
 .env
+.env.docker
 .env.local
 .DS_Store
 .vscode/

@@ -24,6 +24,27 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
           pip install ruff==0.8.4
+      - name: Validate environment config
+        working-directory: cropconnect-backend
+        env:
+          CROP_DATA_SECRET_KEY: ${{ secrets.CROP_DATA_SECRET_KEY || 'ci-test-placeholder-not-for-prod-1234567890ab' }}
+          CROP_AUTH_TOKEN_SECRET: ${{ secrets.CROP_AUTH_TOKEN_SECRET || 'ci-test-placeholder-not-for-prod-1234567890ab' }}
+          ESP32_API_KEY: ${{ secrets.ESP32_API_KEY || 'ci-test-key' }}
+          FRONTEND_ORIGINS: "https://cropconnect01.vercel.app"
+          MYSQL_USER: root
+          MYSQL_PASSWORD: test
+          MYSQL_DATABASE: cropconnect_test
+        run: |
+          python - <<'EOF'
+          from config import validate_required_environment
+          problems = validate_required_environment()
+          if problems:
+              print("Environment problems found:")
+              for p in problems:
+                  print(f"  - {p}")
+              exit(1)
+          print("Environment validation passed")
+          EOF
       - name: Lint backend
         run: ruff check .
       - name: Test backend
@@ -49,6 +70,15 @@ jobs:
         run: npm run test
       - name: Check protected routes
         run: npm run check
+      - name: Generate PWA icons
+        working-directory: cropconnect-frontend
+        run: |
+          if [ ! -f public/icon-192.png ] || [ ! -f public/icon-512.png ]; then
+            npm install
+            npm run generate-icons
+          else
+            echo "PWA icons already present, skipping generation"
+          fi
       - name: Build frontend
         run: npm run build
 

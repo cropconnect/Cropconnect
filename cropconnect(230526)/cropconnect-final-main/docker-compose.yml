@@ -1,43 +1,58 @@
+# =============================================================================
+# LOCAL DEVELOPMENT ONLY — DO NOT USE IN PRODUCTION
+# =============================================================================
+# This file uses placeholder values for secrets and passwords.
+# Running this in production exposes your database and API to attackers.
+#
+# For production, deploy via:
+#   Backend  → Railway (set all env vars in Railway dashboard)
+#   Frontend → Vercel  (set all env vars in Vercel dashboard)
+#
+# Required secrets that MUST be rotated before any production use:
+#   CROP_DATA_SECRET_KEY       — generate with: python -c "import secrets; print(secrets.token_urlsafe(48))"
+#   CROP_AUTH_TOKEN_SECRET     — generate with: python -c "import secrets; print(secrets.token_urlsafe(48))"
+#   ESP32_API_KEY              — generate with: python -c "import secrets; print(secrets.token_hex(32))"
+#   MYSQL_ROOT_PASSWORD        — use a strong random password
+#   MYSQL_PASSWORD             — use a strong random password (different from root)
+# =============================================================================
+
 services:
   mysql:
     image: mysql:8.4
+    env_file: .env.docker
     environment:
-      # DEV ONLY — change all passwords before any production or cloud deployment.
-      MYSQL_ROOT_PASSWORD: cropconnect_root
-      MYSQL_DATABASE: cropconnect
+      # Loaded from .env.docker so local secrets are not hardcoded in compose.
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3306:3306"
     volumes:
       - mysql-data:/var/lib/mysql
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-pcropconnect_root"]
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -p$${MYSQL_ROOT_PASSWORD}"]
       interval: 10s
       timeout: 5s
       retries: 10
+    networks:
+      default:
+        aliases:
+          - db
 
   backend:
     image: python:3.12-slim
     working_dir: /app/cropconnect-backend
     volumes:
       - .:/app
+    env_file: .env.docker
     environment:
-      MYSQL_HOST: mysql
-      MYSQL_PORT: "3306"
-      MYSQL_USER: root
-      MYSQL_PASSWORD: cropconnect_root
-      MYSQL_DATABASE: cropconnect
       MYSQL_POOL_SIZE: "5"
-      CROP_DATA_SECRET_KEY: docker_dev_data_secret_change_me_32_chars
-      CROP_AUTH_TOKEN_SECRET: docker_dev_auth_secret_change_me_32_chars
-      AUTH_COOKIE_SECURE: "false"
-      AUTH_COOKIE_SAMESITE: lax
-      FRONTEND_ORIGINS: http://localhost:3000
       FRONTEND_PUBLIC_URL: http://localhost:3000
       ESP32_GET_WRITE_ENABLED: "true"
       QUERY_API_KEY_ENABLED: "true"
       # DEV ONLY — never set true in production. Global key bypasses per-device auth.
       ALLOW_GLOBAL_ESP32_API_KEY: "true"
-      ESP32_API_KEY: docker-dev-esp32-key
       PUBLIC_TRANSLATION_ENABLED: "false"
       PUBLIC_RATE_LIMIT_DB_FAIL_OPEN: "true"
       GEMINI_API_KEY: ""
@@ -58,6 +73,7 @@ services:
     working_dir: /app/cropconnect-frontend
     volumes:
       - .:/app
+    env_file: .env.docker
     environment:
       VITE_BACKEND_URL: http://localhost:8001
       VITE_PUBLIC_TRANSLATION_ENABLED: "false"
