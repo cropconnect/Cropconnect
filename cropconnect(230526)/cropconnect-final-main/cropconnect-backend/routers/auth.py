@@ -2,10 +2,12 @@
 import hashlib
 import secrets
 import urllib.parse
+from datetime import datetime, timedelta
 from typing import Any
 
 import mysql.connector
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
+from pydantic import BaseModel
 
 from config import settings
 from db.connections import get_connection
@@ -26,11 +28,17 @@ from services.auth_service import (
     user_row_to_payload,
 )
 from services.deps import get_current_user
+from services.email_service import send_verification_email
 
 router = APIRouter()
 logger = configure_logging()
 
 ENCRYPTED_PROFILE_FIELDS = {"name", "phone", "state", "location", "city", "village", "district"}
+
+
+class VerifyEmailIn(BaseModel):
+    email: str
+    code: str
 
 
 def raise_public_error(status_code: int, detail: str, _context: str, exc: Exception) -> None:
@@ -46,6 +54,10 @@ def load_owner_profile(owner_id: int) -> dict[str, Any]:
     except Exception as exc:
         raise_public_error(503, "Could not load account profile", "Owner profile lookup failed", exc)
     return user_row_to_payload(row) if row else {}
+
+
+def verification_token_hash(user_id: int, code: str) -> str:
+    return hashlib.sha256(f"{user_id}:{code}:{settings.crop_auth_token_secret}".encode("utf-8")).hexdigest()
 
 
 @router.post("/api/auth/signup")
@@ -116,6 +128,26 @@ def auth_signup(payload: AuthSignupIn, request: Request, response: Response):
         raise_public_error(503, "Could not create account", "Signup failed", exc)
 
     user = user_row_to_payload(row)
+    email_verification_sent = False
+    if smtp_configured():
+        verification_code = str(secrets.randbelow(900000) + 100000)
+        verification_hash = verification_token_hash(user_id, verification_code)
+        expires_at = datetime.utcnow() + timedelta(hours=24)
+        try:
+            with get_connection() as conn:
+                with conn.cursor() as cursor:
+                    cursor.execute(
+                        """
+                        INSERT INTO password_reset_tokens (email, token_hash, expires_at)
+                        VALUES (%s, %s, %s)
+                        """,
+                        (email, verification_hash, expires_at),
+                    )
+                conn.commit()
+            email_verification_sent = send_verification_email(email, user.get("name", ""), verification_code)
+        except Exception as exc:
+            logger.exception("Email verification setup failed for %s: %s", email, exc)
+
     token = auth_token_for_user(user)
     csrf_token = set_auth_cookie(response, token)
     return {
@@ -123,7 +155,58 @@ def auth_signup(payload: AuthSignupIn, request: Request, response: Response):
         "user": user,
         "token": token,
         "csrfToken": csrf_token,
+        "emailVerificationSent": email_verification_sent,
     }
+
+
+@router.post("/api/auth/verify-email")
+def verify_email(payload: VerifyEmailIn):
+    email = payload.email.strip().lower()
+    code = payload.code.strip()
+    if len(code) != 6 or not code.isdigit():
+        raise HTTPException(status_code=400, detail="Invalid verification code.")
+
+    try:
+        with get_connection() as conn:
+            with conn.cursor(dictionary=True) as cursor:
+                cursor.execute("SELECT id FROM `users` WHERE `email` = %s LIMIT 1", (email,))
+                user_row = cursor.fetchone()
+                if not user_row:
+                    raise HTTPException(status_code=400, detail="Invalid or expired verification code.")
+
+                hashed_token = verification_token_hash(int(user_row["id"]), code)
+                cursor.execute(
+                    """
+                    SELECT id
+                    FROM password_reset_tokens
+                    WHERE email = %s
+                      AND token_hash = %s
+                      AND used_at IS NULL
+                      AND expires_at > UTC_TIMESTAMP()
+                    ORDER BY id DESC
+                    LIMIT 1
+                    """,
+                    (email, hashed_token),
+                )
+                token_row = cursor.fetchone()
+                if not token_row:
+                    raise HTTPException(status_code=400, detail="Invalid or expired verification code.")
+
+                cursor.execute(
+                    "UPDATE password_reset_tokens SET used_at = UTC_TIMESTAMP() WHERE id = %s",
+                    (token_row["id"],),
+                )
+                cursor.execute(
+                    "UPDATE `users` SET `email_verified` = 1 WHERE `id` = %s",
+                    (user_row["id"],),
+                )
+            conn.commit()
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise_public_error(503, "Could not verify email", "Verify email failed", exc)
+
+    return {"ok": True, "message": "Email verified successfully."}
 
 
 @router.post("/api/auth/login")

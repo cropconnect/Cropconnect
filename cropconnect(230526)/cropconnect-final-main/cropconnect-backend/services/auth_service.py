@@ -55,6 +55,7 @@ def user_row_to_payload(row: dict[str, Any]) -> dict[str, Any]:
         "pumps": row.get("pumps") or "0",
         "sensorSetupComplete": bool(row.get("sensor_setup_complete")),
         "sensorSetupStatus": row.get("sensor_setup_status") or "pending",
+        "emailVerified": bool(row.get("email_verified")),
     }
 
 

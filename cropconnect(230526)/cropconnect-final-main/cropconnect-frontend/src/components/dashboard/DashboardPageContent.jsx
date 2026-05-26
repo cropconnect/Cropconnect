@@ -377,7 +377,36 @@ export default function DashboardPageContent({ ctx }) {
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <div className="p-5 rounded-xl border shadow-sm" style={{ background: colors.cream, borderColor: colors.creamDark }}>
                 <h3 className="font-semibold mb-4" style={{ color: colors.textDark }}>Active Alerts</h3>
-                <ActiveAlertsEmptyState />
+                {activeSensorAlerts.length > 0 ? (
+                  <div className="space-y-2">
+                    {activeSensorAlerts.slice(0, 3).map((alert) => (
+                      <div
+                        key={alert.key}
+                        className="flex items-start gap-3 p-3 rounded-lg"
+                        style={{
+                          background: alert.tone === "critical" ? "#FEF2F2" : "#FFFBEB",
+                          borderLeft: `3px solid ${alert.tone === "critical" ? "#EF4444" : "#F59E0B"}`,
+                        }}
+                      >
+                        <alert.icon
+                          className="w-4 h-4 mt-0.5 shrink-0"
+                          style={{ color: alert.tone === "critical" ? "#EF4444" : "#F59E0B" }}
+                        />
+                        <div>
+                          <p className="text-sm font-medium" style={{ color: "#111827" }}>{alert.title}</p>
+                          <p className="text-xs mt-0.5" style={{ color: "#6B7280" }}>{alert.body}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {activeSensorAlerts.length > 3 && (
+                      <p className="text-xs text-center pt-1" style={{ color: colors.textLight }}>
+                        +{activeSensorAlerts.length - 3} more alerts - check Notifications
+                      </p>
+                    )}
+                  </div>
+                ) : (
+                  <ActiveAlertsEmptyState />
+                )}
               </div>
 
               <div className="p-5 rounded-xl border shadow-sm" style={{ background: colors.cream, borderColor: colors.creamDark }}>
@@ -449,12 +478,12 @@ export default function DashboardPageContent({ ctx }) {
         return (
           <div className="space-y-4">
             {notificationItems.length === 0 && (
-              <div className="p-6 rounded-xl bg-white border border-[#e8e3d8] shadow-sm text-center text-sm" style={{ color: colors.textLight }}>
+              <div className="p-6 rounded-xl border shadow-sm text-center text-sm" style={{ background: colors.cream, borderColor: colors.creamDark, color: colors.textLight }}>
                 No notifications yet.
               </div>
             )}
             {notificationItems.map((item) => (
-              <div key={item.title} className="p-4 sm:p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm flex items-start gap-4">
+              <div key={item.title} className="p-4 sm:p-5 rounded-xl border shadow-sm flex items-start gap-4" style={{ background: colors.cream, borderColor: colors.creamDark }}>
                 <span className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0" style={{ background: `${item.tone}18`, color: item.tone }}>
                   <item.icon className="w-5 h-5" />
                 </span>

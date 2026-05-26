@@ -12,6 +12,7 @@ const LoginPage = lazy(() => import("./pages/LoginPage"));
 const SignInPage = lazy(() => import("./pages/SignInPage"));
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
+const VerifyEmailPage = lazy(() => import("./pages/VerifyEmailPage"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const CropPlanner = lazy(() => import("./pages/CropPlanner"));
 const LegalPage = lazy(() => import("./pages/LegalPage"));
@@ -95,6 +96,7 @@ function App() {
               <Route path="/signin" element={<SignInPage />} />
               <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route path="/reset-password" element={<ResetPasswordPage />} />
+              <Route path="/verify-email" element={<VerifyEmailPage />} />
               <Route path="/terms" element={<LegalPage type="terms" />} />
               <Route path="/privacy" element={<LegalPage type="privacy" />} />
               <Route path="/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />

@@ -1,4 +1,5 @@
 import { CloudSun, Droplets, Flower2, Leaf, Radio, Sprout, Wheat } from "lucide-react";
+import { SENSOR_THRESHOLDS } from "../../lib/sensorThresholds";
 
 const EMPTY_DISPLAY = "--";
 const isPresent = (value) => value !== null && value !== undefined && value !== "";
@@ -11,16 +12,6 @@ const numericOrNull = (value) => {
 const StatusChip = ({ status }) => (
   <span className="px-2 py-1 rounded-md bg-green-50 text-green-700 text-xs font-semibold">{status}</span>
 );
-
-const CROP_RANGES = [
-  { reading: "Soil Moisture", safe: "40-70%", warning: "<30% or >80%" },
-  { reading: "Temperature", safe: "20-35\u00b0C", warning: "<10\u00b0C or >42\u00b0C" },
-  { reading: "Humidity", safe: "50-80%", warning: "<30% or >90%" },
-  { reading: "pH", safe: "6.0-7.5", warning: "<5.5 or >8.0" },
-  { reading: "Nitrogen", safe: "20-60 mg/kg", warning: "<10 or >80" },
-  { reading: "Phosphorus", safe: "10-40 mg/kg", warning: "<5 or >60" },
-  { reading: "Potassium", safe: "15-50 mg/kg", warning: "<10 or >80" },
-];
 
 const SensorCard = ({ colors, icon: Icon, title, value, unit, color, min, max, barValue }) => {
   const colorStyles = {
@@ -127,14 +118,18 @@ const SensorPanel = ({ colors, sensorConnection = {}, sensorData = {}, userData 
           </tr>
         </thead>
         <tbody>
-          {CROP_RANGES.map((range) => (
-            <tr key={range.reading} className="border-b border-[#f1eee7] last:border-b-0">
-              <td className="py-3 pr-3 font-medium" style={{ color: colors.textDark }}>{range.reading}</td>
+          {Object.entries(SENSOR_THRESHOLDS).map(([key, spec]) => (
+            <tr key={key} className="border-b last:border-0" style={{ borderColor: colors.creamDark }}>
+              <td className="py-3 px-3 font-medium" style={{ color: colors.textDark }}>{spec.label}</td>
               <td className="py-3 px-3">
-                <span className="inline-flex rounded-md bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">{range.safe}</span>
+                <span className="inline-flex rounded-md bg-green-50 px-2 py-1 text-xs font-semibold text-green-700">
+                  {spec.warning.low}-{spec.warning.high}{spec.unit}
+                </span>
               </td>
-              <td className="py-3 pl-3">
-                <span className="inline-flex rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">{range.warning}</span>
+              <td className="py-3 px-3">
+                <span className="inline-flex rounded-md bg-amber-50 px-2 py-1 text-xs font-semibold text-amber-700">
+                  &lt;{spec.warning.low} or &gt;{spec.warning.high}{spec.unit}
+                </span>
               </td>
             </tr>
           ))}

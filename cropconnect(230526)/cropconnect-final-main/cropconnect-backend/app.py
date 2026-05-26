@@ -80,6 +80,7 @@ CSRF_EXEMPT_PATHS = {
     "/api/auth/login",
     "/api/auth/password-reset-request",
     "/api/auth/password-reset-confirm",
+    "/api/auth/verify-email",
     "/api/enquiries",
     "/api/utils/translate",
     "/api/telemetry/ingest",

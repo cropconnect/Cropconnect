@@ -70,3 +70,39 @@ def send_password_reset_email(email: str, reset_url: str) -> bool:
         smtp.send_message(msg)
 
     return True
+
+
+def send_verification_email(email: str, name: str, code: str) -> bool:
+    if not smtp_configured():
+        return False
+
+    msg = EmailMessage()
+    msg["Subject"] = "Verify your CropConnect account"
+    msg["From"] = settings.smtp_user
+    msg["To"] = email
+    msg.set_content(
+        "\n".join(
+            [
+                f"Hi {name or 'Farmer'},",
+                "",
+                "Welcome to CropConnect. Your verification code is:",
+                "",
+                f"    {code}",
+                "",
+                "This code expires in 24 hours.",
+                "",
+                "If you did not create a CropConnect account, ignore this email.",
+                "",
+                "- CropConnect Team",
+            ]
+        )
+    )
+
+    try:
+        with smtplib.SMTP(settings.smtp_host, settings.smtp_port, timeout=15) as smtp:
+            smtp.starttls()
+            smtp.login(settings.smtp_user, settings.smtp_password)
+            smtp.send_message(msg)
+        return True
+    except Exception:
+        return False

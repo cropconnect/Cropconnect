@@ -128,7 +128,11 @@ export default function SignInPage() {
       storeSessionUser(response.data.user);
 
       toast.success("Account created successfully! Welcome to CropConnect.");
-      navigate("/dashboard");
+      if (response.data.emailVerificationSent) {
+        navigate(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       const detail = err?.response?.data?.detail;
       if (!err?.response) {

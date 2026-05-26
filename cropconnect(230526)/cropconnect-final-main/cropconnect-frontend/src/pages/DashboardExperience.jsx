@@ -14,6 +14,7 @@ import {
   LogOut,
   TrendingUp,
   TrendingDown,
+  AlertCircle,
   AlertTriangle,
   Info,
   Sprout,
@@ -46,6 +47,7 @@ import { useLandingLanguage } from "../contexts/AppLanguageContext";
 import DashboardPageContent from "../components/dashboard/DashboardPageContent";
 import { toast } from "sonner";
 import { API } from "../lib/api";
+import { evaluateAllReadings } from "../lib/sensorThresholds";
 import { useAiChat } from "../hooks/useAiChat";
 import { useAuth } from "../hooks/useAuth";
 import { useMarketData } from "../hooks/useMarketData";
@@ -190,25 +192,6 @@ const NAV_GROUPS = {
   intelligence: ["cropPlanner", "flow", "ai", "settings", "profile"],
 };
 
-const buildSensorAlerts = (data = {}, connection = {}) => {
-  if (connection.source !== "esp32") return [];
-  const alerts = [];
-  const addAlert = (id, title, body) => alerts.push({ id, title, body });
-
-  if (isPresent(data.soilMoisture) && data.soilMoisture < 25) {
-    addAlert("soil-moisture-low", "Soil moisture is low", `Latest SIM800L reading is ${data.soilMoisture}%. Check irrigation.`);
-  }
-  if (isPresent(data.soilMoisture) && data.soilMoisture > 85) {
-    addAlert("soil-moisture-high", "Soil moisture is very high", `Latest SIM800L reading is ${data.soilMoisture}%. Check drainage and pump state.`);
-  }
-  if (isPresent(data.temperature) && data.temperature > 40) {
-    addAlert("temperature-high", "Temperature is high", `Latest SIM800L reading is ${data.temperature}\u00b0C. Avoid spraying and check crop stress.`);
-  }
-  if (isPresent(data.soilPh) && (data.soilPh < 5.5 || data.soilPh > 8.5)) {
-    addAlert("ph-out-of-range", "Soil pH needs attention", `Latest SIM800L pH reading is ${data.soilPh}. Confirm with a soil test before treatment.`);
-  }
-  return alerts;
-};
 // Market data must come from the backend/API. No client-side demo prices.
 const emptyMarketData = {
   prices: [],
@@ -320,10 +303,13 @@ export default function Dashboard() {
     pollIntervalMs: SENSOR_POLL_INTERVAL_MS,
   });
 
-  const activeSensorAlerts = useMemo(
-    () => buildSensorAlerts(sensorData, sensorConnection),
-    [sensorData, sensorConnection]
-  );
+  const activeSensorAlerts = useMemo(() => {
+    return evaluateAllReadings(sensorData).map((alert) => ({
+      ...alert,
+      icon: alert.tone === "critical" ? AlertCircle : AlertTriangle,
+      time: new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" }),
+    }));
+  }, [sensorData]);
 
   const cropZones = useMemo(
     () => [
@@ -532,7 +518,7 @@ export default function Dashboard() {
       alerts.slice(0, 3).forEach((alert) => {
         toast.warning(alert.title, {
           description: alert.body,
-          id: `${alert.id}-${Math.floor(Date.now() / ALERT_TOAST_INTERVAL_MS)}`,
+          id: `${alert.key}-${Math.floor(Date.now() / ALERT_TOAST_INTERVAL_MS)}`,
           duration: 8000,
         });
       });
@@ -904,7 +890,7 @@ export default function Dashboard() {
     { id: "sensors", icon: Radio, label: t("sensors"), badge: t("live") },
     { id: "pump", icon: Droplets, label: t("pump") },
     { id: "weather", icon: CloudSun, label: t("weather") },
-    { id: "notifications", icon: Bell, label: t("notifications"), badge: activeSensorAlerts.length ? String(activeSensorAlerts.length) : null },
+    { id: "notifications", icon: Bell, label: t("notifications"), badge: activeSensorAlerts.length > 0 ? String(activeSensorAlerts.length) : undefined },
     { id: "market", icon: BarChart3, label: t("market") },
     { id: "cropPlanner", icon: Sprout, label: t("cropPlanner") },
     { id: "flow", icon: Zap, label: t("flow") },

@@ -133,6 +133,7 @@ def ensure_users_tables(cursor, database: str) -> None:
           `pumps` VARCHAR(20) NULL,
           `sensor_setup_complete` TINYINT(1) NOT NULL DEFAULT 0,
           `sensor_setup_status` VARCHAR(40) NULL,
+          `email_verified` TINYINT(1) NOT NULL DEFAULT 0,
           PRIMARY KEY (`id`),
           UNIQUE KEY `uq_users_email` (`email`),
           UNIQUE KEY `uq_users_sensor_device_id` (`sensor_device_id`)
@@ -151,6 +152,7 @@ def ensure_users_tables(cursor, database: str) -> None:
     add_column_if_missing(cursor, database, "users", "pumps", "VARCHAR(20) NULL")
     add_column_if_missing(cursor, database, "users", "sensor_setup_complete", "TINYINT(1) NOT NULL DEFAULT 0")
     add_column_if_missing(cursor, database, "users", "sensor_setup_status", "VARCHAR(40) NULL")
+    add_column_if_missing(cursor, database, "users", "email_verified", "TINYINT(1) NOT NULL DEFAULT 0")
     cursor.execute("UPDATE `users` SET `sensor_device_id` = NULL WHERE TRIM(COALESCE(`sensor_device_id`, '')) = ''")
     cursor.execute(
         """
