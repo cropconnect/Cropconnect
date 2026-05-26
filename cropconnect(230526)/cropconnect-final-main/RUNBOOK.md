@@ -77,3 +77,32 @@ Frontend (set in Vercel):
   VITE_BACKEND_URL            — full backend URL including /api suffix
   VITE_SENTRY_DSN             — frontend error reporting
   VITE_PUBLIC_TRANSLATION_ENABLED — enables AI whole-site translation
+
+## Pre-launch environment variable checklist
+
+```bash
+#!/bin/bash
+# Run this once before your first production deploy.
+# Requires: railway CLI and vercel CLI to be installed and logged in.
+
+DATA_SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(48))")
+AUTH_SECRET=$(python -c "import secrets; print(secrets.token_urlsafe(48))")
+ESP32_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
+
+echo "=== Railway (backend) ==="
+echo "railway variables set CROP_DATA_SECRET_KEY=$DATA_SECRET"
+echo "railway variables set CROP_AUTH_TOKEN_SECRET=$AUTH_SECRET"
+echo "railway variables set ESP32_API_KEY=$ESP32_KEY"
+echo "railway variables set ALLOW_GLOBAL_ESP32_API_KEY=false"
+echo "railway variables set AUTH_COOKIE_SECURE=true"
+echo "railway variables set AUTH_COOKIE_SAMESITE=none"
+echo "railway variables set TRUST_PROXY_HEADERS=true"
+echo "railway variables set FRONTEND_ORIGINS=https://cropconnect01.vercel.app"
+
+echo ""
+echo "=== Vercel (frontend) ==="
+echo "vercel env add VITE_SENTRY_DSN production"
+```
+
+After running, copy-paste each railway/vercel command into your terminal.
+Never commit the generated values to git.

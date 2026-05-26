@@ -29,14 +29,13 @@ def rate_limit_authenticated_request(owner_id: int, bucket: str, limit: int, win
     rate_limit_named_key(bucket, f"user:{owner_id}", limit, window_seconds)
 
 
-def rate_limit_ai_request(request: Request, user_id: int | None = None, now: float | None = None) -> None:
+def rate_limit_ai_request(request: Request, user_id: int | None = None) -> None:
     """Apply per-user AI sliding-window limits before expensive model calls."""
     identity = f"user:{user_id}" if user_id is not None else f"ip:{public_client_host(request)}"
     retry_after = _check_sliding_windows(
         bucket="ai",
         identity=identity,
         limits=((10, 60), (50, 60 * 60)),
-        now=now,
     )
     if retry_after > 0:
         # Return Retry-After so clients know exactly when an AI request can be retried.
@@ -51,12 +50,56 @@ def _check_sliding_windows(
     bucket: str,
     identity: str,
     limits: tuple[tuple[int, int], ...],
-    now: float | None = None,
 ) -> int:
     global AI_RATE_LIMITS
-    current_time = now if now is not None else time.time()
     longest_window = max(window_seconds for _limit, window_seconds in limits)
     key = f"{bucket}:{identity}"[:255]
+    try:
+        with get_connection() as conn:
+            with conn.cursor(dictionary=True) as cursor:
+                cursor.execute(
+                    "DELETE FROM public_rate_limits WHERE requested_at < DATE_SUB(UTC_TIMESTAMP(), INTERVAL %s SECOND)",
+                    (longest_window,),
+                )
+                retry_after = 0
+                for limit, window_seconds in limits:
+                    cursor.execute(
+                        """
+                        SELECT
+                          COUNT(*) AS count,
+                          TIMESTAMPDIFF(SECOND, MIN(requested_at), UTC_TIMESTAMP()) AS oldest_age_seconds
+                        FROM public_rate_limits
+                        WHERE bucket = %s
+                          AND client_host = %s
+                          AND requested_at >= DATE_SUB(UTC_TIMESTAMP(), INTERVAL %s SECOND)
+                        """,
+                        (bucket, key, window_seconds),
+                    )
+                    row = cursor.fetchone() or {}
+                    count = int(row.get("count") or 0)
+                    if count >= limit:
+                        oldest_age_seconds = int(row.get("oldest_age_seconds") or 0)
+                        retry_after = max(retry_after, max(1, window_seconds - oldest_age_seconds + 1))
+                if retry_after:
+                    conn.commit()
+                    return retry_after
+                # Store AI requests in MySQL so limits survive deploys and multiple workers.
+                cursor.execute(
+                    "INSERT INTO public_rate_limits (bucket, client_host) VALUES (%s, %s)",
+                    (bucket, key),
+                )
+            conn.commit()
+        return 0
+    except Exception as exc:
+        logger.exception("MySQL rate limiter unavailable, using in-memory fallback: %s", exc)
+
+    # Fallback is process-local: multi-worker deployments get per-worker limits.
+    logger.warning(
+        "Rate limiter using in-memory fallback for key=%s - "
+        "limits are per-worker in multi-process deployments",
+        key,
+    )
+    current_time = time.time()
     timestamps = [
         timestamp
         for timestamp in AI_RATE_LIMITS.get(key, [])
