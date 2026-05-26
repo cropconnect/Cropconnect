@@ -21,13 +21,18 @@ from services.ai_service import (
 )
 from services.auth_service import insert_chat_record, owner_profile_context, require_auth_owner
 from services.market_service import live_market_context_for_profile
-from services.rate_limit import rate_limit_authenticated_request, rate_limit_public_request
+from services.rate_limit import rate_limit_ai_request, rate_limit_authenticated_request, rate_limit_public_request
 from services.sensor_service import latest_sensor_context
 
 AUTH_COOKIE_NAME = "cropconnect_auth"
 PUBLIC_TRANSLATION_ENABLED = settings.public_translation_enabled
 router = APIRouter()
 logger = configure_logging()
+
+
+def enforce_ai_rate_limit(request: Request, user_id: int | None = None) -> None:
+    # AI endpoints share a 10/min and 50/hour sliding limit to protect provider quota.
+    rate_limit_ai_request(request, user_id=user_id)
 
 
 def raise_public_error(status_code: int, detail: str, context: str, exc: Exception) -> None:
@@ -76,6 +81,7 @@ def fallback_farm_reply(message: str, live_sensor_context: dict, profile_locatio
 async def api_translate(payload: TranslateIn, request: Request):
     if not PUBLIC_TRANSLATION_ENABLED:
         raise HTTPException(status_code=503, detail="Public translation endpoint is disabled")
+    enforce_ai_rate_limit(request)
     rate_limit_public_request(request, "translate", limit=30, window_seconds=60)
     texts = payload.texts or ([payload.text] if payload.text else [])
     texts = [text for text in texts if text is not None]
@@ -101,6 +107,7 @@ def ai_chat(
     auth_cookie: str | None = Cookie(default=None, alias=AUTH_COOKIE_NAME),
 ):
     owner_id, owner_email = require_auth_owner(authorization, auth_cookie)
+    enforce_ai_rate_limit(request, owner_id)
     rate_limit_authenticated_request(owner_id, "ai-chat", limit=20, window_seconds=60)
     related_to_plant_or_soil = classify_farm_scope_with_ai(payload.message, payload.language)
     owner_profile = owner_profile_context(owner_id)
@@ -270,6 +277,7 @@ def crop_recommend(
     auth_cookie: str | None = Cookie(default=None, alias=AUTH_COOKIE_NAME),
 ):
     owner_id, _owner_email = require_auth_owner(authorization, auth_cookie)
+    enforce_ai_rate_limit(request, owner_id)
     rate_limit_authenticated_request(owner_id, "ai-crop-recommend", limit=8, window_seconds=15 * 60)
     require_ai_provider()
 
@@ -356,6 +364,7 @@ def ai_orchestrate(
     auth_cookie: str | None = Cookie(default=None, alias=AUTH_COOKIE_NAME),
 ):
     owner_id, owner_email = require_auth_owner(authorization, auth_cookie)
+    enforce_ai_rate_limit(request, owner_id)
     rate_limit_authenticated_request(owner_id, "ai-orchestrate", limit=8, window_seconds=15 * 60)
     require_ai_provider()
 

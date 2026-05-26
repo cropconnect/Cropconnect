@@ -12,8 +12,8 @@ for var_name in "${required_vars[@]}"; do
 done
 
 backup_dir="/backups"
-timestamp="$(date +%Y%m%d_%H%M%S)"
-backup_file="${backup_dir}/cropconnect_${timestamp}.sql.gz"
+timestamp="$(date +%Y-%m-%d_%H-%M)"
+backup_file="${backup_dir}/backup_${timestamp}.sql.gz"
 
 mkdir -p "${backup_dir}"
 
@@ -26,6 +26,7 @@ MYSQL_PWD="${MYSQL_PASSWORD}" mysqldump \
   --triggers \
   "${MYSQL_DATABASE}" | gzip > "${backup_file}"
 
-find "${backup_dir}" -maxdepth 1 -name "cropconnect_*.sql.gz" -type f -mtime +7 -delete
+# Keep storage bounded by automatically pruning backups older than 7 days.
+find "${backup_dir}" -maxdepth 1 -name "backup_*.sql.gz" -type f -mtime +7 -delete
 
 echo "Backup written to ${backup_file}"

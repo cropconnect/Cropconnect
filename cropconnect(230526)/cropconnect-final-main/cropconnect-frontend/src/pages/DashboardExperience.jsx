@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { lazy, Suspense, useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
   Leaf,
@@ -30,9 +30,11 @@ import {
   ChevronDown,
   CheckCircle2,
   Copy,
+  Menu,
   Router,
   ShieldCheck,
   Wifi,
+  X,
 } from "lucide-react";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
@@ -44,7 +46,6 @@ import PumpSection from "../components/dashboard/PumpSection";
 import SensorSection from "../components/dashboard/SensorSection";
 import WeatherSection from "../components/dashboard/WeatherSection";
 import { useLandingLanguage } from "../contexts/AppLanguageContext";
-import DashboardPageContent from "../components/dashboard/DashboardPageContent";
 import { toast } from "sonner";
 import { API } from "../lib/api";
 import { evaluateAllReadings } from "../lib/sensorThresholds";
@@ -56,6 +57,14 @@ import { usePumpControl } from "../hooks/usePumpControl";
 import { useSensorData } from "../hooks/useSensorData";
 import { useSpeech } from "../hooks/useSpeech";
 import { useWeatherData } from "../hooks/useWeatherData";
+
+const LazyDashboardHome = lazy(() => import("./dashboard/DashboardHome"));
+const LazyDashboardSensors = lazy(() => import("./dashboard/DashboardSensors"));
+const LazyDashboardPump = lazy(() => import("./dashboard/DashboardPump"));
+const LazyDashboardWeather = lazy(() => import("./dashboard/DashboardWeather"));
+const LazyDashboardMarket = lazy(() => import("./dashboard/DashboardMarket"));
+const LazyDashboardAI = lazy(() => import("./dashboard/DashboardAI"));
+const LazyDashboardSettings = lazy(() => import("./dashboard/DashboardSettings"));
 
 const humanizeApiValue = (value, fallback = "") => {
   if (value == null || value === "") return fallback;
@@ -97,36 +106,36 @@ const percentValue = (value, max = 100) => {
 
 // Color system
 const lightColors = {
-  greenDark: "#1e3a2f",
-  greenMid: "#2d5a3d",
-  greenAccent: "#3a6b4a",
-  greenLight: "#4a8a5a",
-  terracotta: "#c96a4a",
-  terracottaLight: "#d4795c",
-  cream: "#f0ece4",
-  creamDark: "#e8e3d8",
-  gold: "#c8a84b",
-  goldLight: "#e8c86b",
-  blue: "#3a7ab5",
-  blueLight: "#5a9ad5",
-  red: "#c94a3a",
-  textDark: "#1a2820",
-  textMid: "#4a5548",
-  textLight: "#8a9488",
-  bodyBg: "#f5f2ec",
+  greenDark: "var(--cc-forest)",
+  greenMid: "var(--cc-leaf)",
+  greenAccent: "var(--cc-leaf)",
+  greenLight: "var(--cc-leaf)",
+  terracotta: "var(--cc-terracotta)",
+  terracottaLight: "var(--cc-terracotta)",
+  cream: "var(--cc-cream)",
+  creamDark: "var(--cc-stone)",
+  gold: "var(--cc-gold)",
+  goldLight: "var(--cc-gold)",
+  blue: "var(--cc-leaf)",
+  blueLight: "var(--cc-leaf)",
+  red: "var(--cc-terracotta)",
+  textDark: "var(--cc-ink)",
+  textMid: "var(--cc-text-mid)",
+  textLight: "var(--cc-text-light)",
+  bodyBg: "var(--cc-sand)",
 };
 
 const darkColors = {
   ...lightColors,
-  greenDark: "#10261c",
-  greenMid: "#1f4633",
-  greenAccent: "#2f6a4d",
-  cream: "#1c2921",
-  creamDark: "#314238",
-  textDark: "#f5f2ec",
-  textMid: "#cbd6ce",
-  textLight: "#91a195",
-  bodyBg: "#0d1712",
+  greenDark: "var(--cc-forest-deep)",
+  greenMid: "var(--cc-forest)",
+  greenAccent: "var(--cc-leaf)",
+  cream: "var(--cc-forest-deep)",
+  creamDark: "var(--cc-leaf)",
+  textDark: "var(--cc-cream)",
+  textMid: "var(--cc-stone)",
+  textLight: "var(--cc-text-light)",
+  bodyBg: "var(--cc-forest-deep)",
 };
 
 const dashboardCopy = {
@@ -213,14 +222,14 @@ function SidebarNavButton({ item, activePage, setActivePage }) {
       onClick={() => setActivePage(item.id)}
       className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors relative border-l-[3px] ${
         isActive
-          ? "bg-[#1B4332] text-[#FDFBF7] font-medium border-[#E07A5F]"
-          : "text-[#4a5548] hover:bg-[#1B4332]/10 hover:text-[#1B4332] border-transparent"
+          ? "bg-[var(--cc-forest)] text-[var(--cc-cream)] font-medium border-[var(--cc-terracotta)]"
+          : "text-[var(--cc-text-mid)] hover:bg-[var(--cc-forest)]/10 hover:text-[var(--cc-forest)] border-transparent"
       }`}
     >
-      <item.icon className={`w-4 h-4 ${isActive ? "text-[#FDFBF7]" : "text-[#4a5548]"}`} />
-      <span className={`text-sm ${isActive ? "text-[#FDFBF7]" : "text-[#4a5548]"}`}>{item.label}</span>
+      <item.icon className={`w-4 h-4 ${isActive ? "text-[var(--cc-cream)]" : "text-[var(--cc-text-mid)]"}`} />
+      <span className={`text-sm ${isActive ? "text-[var(--cc-cream)]" : "text-[var(--cc-text-mid)]"}`}>{item.label}</span>
       {item.badge && (
-        <span className="ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-[#E07A5F]/20 text-[#E07A5F]">
+        <span className="ml-auto text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-[var(--cc-terracotta)]/20 text-[var(--cc-terracotta)]">
           {item.badge}
         </span>
       )}
@@ -237,6 +246,7 @@ export default function Dashboard() {
     () => localStorage.getItem("cropconnect-theme") || "light"
   );
   const [activePage, setActivePage] = useState("dashboard");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const speechSentRef = useRef(false);
   const logContainerRef = useRef(null);
   const chatContainerRef = useRef(null);
@@ -1001,7 +1011,26 @@ export default function Dashboard() {
     weatherError,
   };
 
-  const renderPage = () => <DashboardPageContent ctx={dashboardPageContext} />;
+  const dashboardPageComponents = {
+    dashboard: LazyDashboardHome,
+    sensors: LazyDashboardSensors,
+    pump: LazyDashboardPump,
+    weather: LazyDashboardWeather,
+    notifications: LazyDashboardHome,
+    market: LazyDashboardMarket,
+    flow: LazyDashboardHome,
+    ai: LazyDashboardAI,
+    cropPlanner: LazyDashboardAI,
+    settings: LazyDashboardSettings,
+    profile: LazyDashboardSettings,
+  };
+  const ActiveDashboardPage = dashboardPageComponents[activePage] || LazyDashboardHome;
+  const renderPage = () => (
+    <Suspense fallback={<div className="p-6 text-sm text-[var(--cc-text-mid)]">Loading...</div>}>
+      {/* Lazy page modules keep heavy dashboard sections code-split by active page. */}
+      <ActiveDashboardPage ctx={dashboardPageContext} />
+    </Suspense>
+  );
 
   // Get user initials
   const getInitials = (name) => {
@@ -1033,9 +1062,9 @@ export default function Dashboard() {
   -d '${examplePayload.replace(/\n/g, " ")}'`;
 
     return (
-      <div className="fixed inset-0 z-[70] overflow-y-auto bg-[#0b1510]/70 backdrop-blur-sm">
+      <div className="fixed inset-0 z-[70] overflow-y-auto bg-[var(--cc-forest-deep)]/70 backdrop-blur-sm">
         <div className="min-h-full px-3 py-5 sm:px-6 sm:py-8 flex items-start justify-center">
-          <div className="w-full max-w-5xl rounded-xl bg-[#FDFBF7] border border-[#D5D1C5] shadow-2xl overflow-hidden">
+          <div className="w-full max-w-5xl rounded-xl bg-[var(--cc-cream)] border border-[var(--cc-stone)] shadow-2xl overflow-hidden">
             <div className="grid grid-cols-1 lg:grid-cols-[0.9fr_1.1fr]">
               <div className="p-5 sm:p-8" style={{ background: colors.greenDark }}>
                 <div className="flex items-center gap-3">
@@ -1075,7 +1104,7 @@ export default function Dashboard() {
                       value={sensorSetupForm.deviceId}
                       readOnly
                       placeholder="Generated by CropConnect"
-                      className="mt-2 bg-white border-[#D5D1C5]"
+                      className="mt-2 bg-white border-[var(--cc-stone)]"
                     />
                   </div>
                   <div>
@@ -1085,12 +1114,12 @@ export default function Dashboard() {
                       min="1"
                       value={sensorSetupForm.nodeCount}
                       onChange={(event) => setSensorSetupForm((prev) => ({ ...prev, nodeCount: event.target.value }))}
-                      className="mt-2 bg-white border-[#D5D1C5]"
+                      className="mt-2 bg-white border-[var(--cc-stone)]"
                     />
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-[#D5D1C5] bg-white p-4">
+                <div className="rounded-lg border border-[var(--cc-stone)] bg-white p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs uppercase tracking-[0.16em]" style={{ color: colors.textLight }}>Telemetry endpoint</p>
@@ -1102,7 +1131,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="rounded-lg border border-[#D5D1C5] bg-white p-4">
+                <div className="rounded-lg border border-[var(--cc-stone)] bg-white p-4">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="text-xs uppercase tracking-[0.16em]" style={{ color: colors.textLight }}>ESP32 device API key</p>
@@ -1126,7 +1155,7 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                <div className="rounded-lg bg-[#101f17] p-4">
+                <div className="rounded-lg bg-[var(--cc-forest-deep)] p-4">
                   <div className="flex items-center justify-between gap-3 mb-3">
                     <p className="text-xs uppercase tracking-[0.16em] text-white/60">Test request</p>
                     <Button type="button" size="sm" variant="outline" className="bg-white" onClick={() => copyToClipboard(curlExample, "Test request copied")}>
@@ -1149,7 +1178,7 @@ export default function Dashboard() {
                 )}
 
                 <div className="flex flex-col sm:flex-row gap-3 pt-2">
-                  <Button type="button" onClick={testSensorConnection} disabled={setupChecking || !sensorDeviceId} className="bg-[#1B4332] hover:bg-[#0F2A1F] text-white">
+                  <Button type="button" onClick={testSensorConnection} disabled={setupChecking || !sensorDeviceId} className="bg-[var(--cc-forest)] hover:bg-[var(--cc-forest-deep)] text-white">
                     {setupChecking ? "Checking..." : "Test live connection"}
                   </Button>
                   <Button type="button" variant="outline" onClick={() => saveSensorSetup("waiting")} className="bg-white">
@@ -1167,6 +1196,78 @@ export default function Dashboard() {
   return (
     <div className={`min-h-screen dashboard-shell ${isDark ? "dashboard-dark" : "dashboard-light"}`} style={{ background: colors.bodyBg }}>
       {!userData.sensorSetupComplete && <SensorSetupWindow />}
+      <button
+        type="button"
+        onClick={() => setSidebarOpen(true)}
+        className="md:hidden fixed top-3 left-3 z-[60] h-10 w-10 rounded-lg bg-[var(--cc-forest)] text-[var(--cc-cream)] shadow-lg flex items-center justify-center"
+        aria-label="Open dashboard menu"
+      >
+        <Menu className="w-5 h-5" />
+      </button>
+      {sidebarOpen && (
+        <div className="md:hidden fixed inset-0 z-[80]">
+          <button
+            type="button"
+            className="absolute inset-0 bg-black/45"
+            onClick={() => setSidebarOpen(false)}
+            aria-label="Close dashboard menu"
+          />
+          <aside className="absolute left-0 top-0 bottom-0 w-[280px] max-w-[82vw] overflow-y-auto shadow-2xl" style={{ background: colors.greenDark }}>
+            <div className="min-h-full flex flex-col">
+              <div className="p-5 border-b flex items-center justify-between" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: colors.greenMid }}>
+                    <Leaf className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <p className="font-display font-bold text-white">CropConnect</p>
+                    <p className="text-[10px] uppercase tracking-wider" style={{ color: colors.textLight }}>{t("farmDashboard")}</p>
+                  </div>
+                </div>
+                <button type="button" onClick={() => setSidebarOpen(false)} className="p-2 rounded-lg text-white/70 hover:bg-white/10" aria-label="Close dashboard menu">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <nav className="flex-1 p-3 space-y-1">
+                {navCategories.map(({ label, items }) => (
+                  <div key={label} className="mb-4 last:mb-0">
+                    <p className="text-[10px] uppercase tracking-wider px-3 mb-2" style={{ color: colors.textLight }}>{label}</p>
+                    {items.map((item) => (
+                      <SidebarNavButton
+                        key={item.id}
+                        item={item}
+                        activePage={activePage}
+                        setActivePage={(page) => {
+                          setActivePage(page);
+                          setSidebarOpen(false);
+                        }}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </nav>
+
+              <div className="p-3 border-t" style={{ borderColor: "rgba(255,255,255,0.1)" }}>
+                <div className="flex items-center gap-3 px-3 py-2">
+                  <div className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-bold" style={{ background: `linear-gradient(135deg, ${colors.greenMid}, ${colors.terracotta})` }}>
+                    <span data-no-translate="true">{getInitials(userData.name)}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p data-no-translate="true" className="text-sm font-medium text-white truncate">{userData.name}</p>
+                    <p data-dynamic-value="true" className="text-xs" style={{ color: colors.textLight }}>
+                      {displayValue(userData.locationType === "city" ? userData.city : userData.village)} - {displayValue(userData.landSize, " acres")}
+                    </p>
+                  </div>
+                  <button onClick={handleLogout} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors">
+                    <LogOut className="w-4 h-4 text-white/60" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </aside>
+        </div>
+      )}
       {/* Sidebar */}
       <aside className="hidden md:flex fixed left-0 top-0 bottom-0 z-40 overflow-y-auto" style={{ width: 240, background: colors.greenDark }}>
         <div className="relative min-h-full flex flex-col">
@@ -1228,7 +1329,7 @@ export default function Dashboard() {
                 <select
                   value={activePage}
                   onChange={(event) => setActivePage(event.target.value)}
-                  className="h-10 w-[152px] appearance-none rounded-lg border border-[#d5d1c5] bg-white pl-9 pr-8 text-sm font-medium outline-none focus:ring-2 focus:ring-[#1B4332]/20"
+                  className="h-10 w-[152px] appearance-none rounded-lg border border-[var(--cc-stone)] bg-white pl-9 pr-8 text-sm font-medium outline-none focus:ring-2 focus:ring-[var(--cc-forest)]/20"
                   style={{ color: colors.textDark }}
                   aria-label="Switch dashboard page"
                 >
@@ -1244,7 +1345,7 @@ export default function Dashboard() {
               </div>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
-              <div className="hidden sm:inline-flex rounded-lg border border-[#d5d1c5] bg-white px-2 py-1">
+              <div className="hidden sm:inline-flex rounded-lg border border-[var(--cc-stone)] bg-white px-2 py-1">
                 <LanguageSelect value={language} onChange={handleLanguageChange} />
               </div>
               <div className="hidden sm:flex flex-col gap-2 px-3 py-1.5 rounded-full" style={{ background: "rgba(45, 90, 61, 0.1)" }}>
@@ -1273,15 +1374,15 @@ export default function Dashboard() {
         </div>
       </main>
 
-      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[#D5D1C5] flex items-stretch">
+      <nav className="sm:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-[var(--cc-stone)] flex items-stretch">
         {mobileNavItems.map((item) => (
           <button
             key={item.id}
             onClick={() => setActivePage(item.id)}
             className={`flex-1 flex flex-col items-center justify-center py-2 gap-1 text-[10px] font-medium transition-colors ${
               activePage === item.id
-                ? "text-[#1B4332] bg-[#1B4332]/5"
-                : "text-[#8a9488]"
+                ? "text-[var(--cc-forest)] bg-[var(--cc-forest)]/5"
+                : "text-[var(--cc-text-light)]"
             }`}
           >
             <item.icon className="w-5 h-5" strokeWidth={activePage === item.id ? 2 : 1.5} />

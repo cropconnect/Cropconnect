@@ -100,3 +100,17 @@ Add a second monitor for the frontend:
   URL: https://cropconnect01.vercel.app
   Keyword: CropConnect
   This catches Vercel deploy failures independently of the backend.
+
+## Hardening pass completed in code
+
+- [x] AI router has per-user sliding-window rate limiting with Retry-After responses
+- [x] Startup environment guard validates required secrets and database variables
+- [x] Backup script has timestamped retention and restore test script
+- [x] PWA icon generation script and generated PNG icons are present
+- [x] Backend and frontend Sentry initialization are wired
+- [x] Dashboard sections are lazy-loaded through page modules
+- [x] Mobile dashboard sidebar drawer is available under 768px
+- [x] Dashboard colors use CSS custom properties
+- [x] Market panel has a Data.gov empty state
+- [x] Rate-limit, sensor-threshold, and pump-control tests are added
+- [x] Health endpoint reports database latency, version, and environment

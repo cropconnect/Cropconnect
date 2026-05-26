@@ -37,6 +37,17 @@
     --sand: #F4F1EA;
     --stone: #D5D1C5;
     --ink: #1A201C;
+    --cc-forest: #1B4332;
+    --cc-forest-deep: #0F2A1F;
+    --cc-leaf: #2D6A4F;
+    --cc-terracotta: #E07A5F;
+    --cc-cream: #FDFBF7;
+    --cc-sand: #F4F1EA;
+    --cc-stone: #D5D1C5;
+    --cc-gold: #E3C77B;
+    --cc-ink: #1A201C;
+    --cc-text-mid: #4a5548;
+    --cc-text-light: #8a9488;
 }
 
 * {

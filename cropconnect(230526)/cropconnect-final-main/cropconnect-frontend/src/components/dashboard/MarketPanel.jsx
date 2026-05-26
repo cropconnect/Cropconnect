@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { BarChart3, Brain, RefreshCw } from "lucide-react";
+import { BarChart3, Brain, RefreshCw, ShoppingCart } from "lucide-react";
 import { getReadableError } from "../../lib/errors";
 import { Button } from "../ui/button";
 
@@ -24,6 +24,25 @@ const MarketSkeleton = () => (
     {Array.from({ length: 5 }).map((_, i) => (
       <div key={i} className="h-14 rounded-xl bg-slate-100 border border-[#e8e3d8]" />
     ))}
+  </div>
+);
+
+const MarketEmptyState = () => (
+  <div className="rounded-xl border border-[#e8e3d8] bg-[#FDFBF7] p-6 text-center">
+    <ShoppingCart className="mx-auto h-8 w-8 text-[#1B4332]" />
+    <h4 className="mt-3 font-semibold text-[#1A201C]">No market prices available</h4>
+    <p className="mx-auto mt-2 max-w-md text-sm text-[#1A201C]/60">
+      Live mandi prices require a Data.gov API key to be configured on the server.
+    </p>
+    {/* Link points operators to the backend setup note for Data.gov market pricing. */}
+    <a
+      href="https://github.com/cropconnect/Cropconnect/blob/main/cropconnect(230526)/cropconnect-final-main/cropconnect-backend/README.md#environment-setup"
+      target="_blank"
+      rel="noreferrer"
+      className="mt-3 inline-flex text-sm font-medium text-[#1B4332] underline"
+    >
+      Learn more
+    </a>
   </div>
 );
 
@@ -76,8 +95,10 @@ export default function MarketPanel({
               </Button>
             </div>
           </div>
-          {(marketLoading || (!prices.length && !marketMessage)) ? (
+          {marketLoading ? (
             <MarketSkeleton />
+          ) : !prices.length ? (
+            <MarketEmptyState />
           ) : (
           <div className="space-y-3">
             {prices.map((crop, index) => (
@@ -111,11 +132,6 @@ export default function MarketPanel({
                 </div>
               </div>
             ))}
-            {!prices.length && (
-              <div className="p-6 text-center text-sm" style={{ color: colors.textLight }}>
-                {marketLoading ? "Loading live mandi prices..." : (marketMessage || EMPTY_DISPLAY)}
-              </div>
-            )}
           </div>
           )}
         </div>

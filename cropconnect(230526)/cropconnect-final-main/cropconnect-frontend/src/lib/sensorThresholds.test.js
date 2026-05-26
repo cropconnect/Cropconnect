@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { evaluateAllReadings, evaluateSensorReading } from "./sensorThresholds";
+import { SENSOR_THRESHOLDS, evaluateAllReadings, evaluateSensorReading } from "./sensorThresholds";
 
 describe("evaluateSensorReading", () => {
   it("returns null for readings within safe range", () => {
@@ -24,6 +24,25 @@ describe("evaluateSensorReading", () => {
   it("returns null for null or undefined values", () => {
     expect(evaluateSensorReading("soilMoisture", null)).toBeNull();
     expect(evaluateSensorReading("soilMoisture", undefined)).toBeNull();
+  });
+
+  it("covers every sensor type at threshold boundaries", () => {
+    Object.entries(SENSOR_THRESHOLDS).forEach(([key, spec]) => {
+      // Boundary values are inclusive-safe; one step outside should alert.
+      expect(evaluateSensorReading(key, spec.warning.low)).toBeNull();
+      expect(evaluateSensorReading(key, spec.warning.high)).toBeNull();
+      expect(evaluateSensorReading(key, spec.warning.low - 1)).not.toBeNull();
+      expect(evaluateSensorReading(key, spec.warning.high + 1)).not.toBeNull();
+    });
+  });
+
+  it("does not throw for absent values on every sensor type", () => {
+    Object.keys(SENSOR_THRESHOLDS).forEach((key) => {
+      expect(() => evaluateSensorReading(key, null)).not.toThrow();
+      expect(() => evaluateSensorReading(key, undefined)).not.toThrow();
+      expect(evaluateSensorReading(key, null)).toBeNull();
+      expect(evaluateSensorReading(key, undefined)).toBeNull();
+    });
   });
 });
 

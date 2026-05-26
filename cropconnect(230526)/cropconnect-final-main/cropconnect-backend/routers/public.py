@@ -1,3 +1,5 @@
+import os
+import time
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Request
@@ -16,14 +18,33 @@ def raise_public_error(status_code: int, detail: str, _context: str, exc: Except
 
 
 def database_health_status():
+    started = time.perf_counter()
     try:
         with get_connection() as conn:
             with conn.cursor() as cursor:
                 cursor.execute("SELECT 1")
                 cursor.fetchone()
-        return {"status": "ok", "db": "ok"}
+        latency_ms = round((time.perf_counter() - started) * 1000)
+        # Health includes DB latency so uptime monitors verify MySQL, not only HTTP.
+        return {
+            "status": "ok",
+            "db": "ok",
+            "db_latency_ms": latency_ms,
+            "version": "1.0.0",
+            "environment": os.getenv("RAILWAY_ENVIRONMENT", "development"),
+        }
     except Exception:
-        return JSONResponse(status_code=503, content={"status": "degraded", "db": "error"})
+        latency_ms = round((time.perf_counter() - started) * 1000)
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "degraded",
+                "db": "error",
+                "db_latency_ms": latency_ms,
+                "version": "1.0.0",
+                "environment": os.getenv("RAILWAY_ENVIRONMENT", "development"),
+            },
+        )
 
 
 @router.get("/health")

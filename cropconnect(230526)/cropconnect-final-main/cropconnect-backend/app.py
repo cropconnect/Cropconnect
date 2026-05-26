@@ -1,8 +1,9 @@
 # FastAPI application creation, middleware, and router registration.
+import os
 import re
 import secrets
+import sys
 import uuid
-import os
 from contextlib import asynccontextmanager
 from urllib.parse import urlparse
 
@@ -10,7 +11,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import PlainTextResponse
 
-from config import settings
+from config import settings, validate_required_environment
 from db.connections import configure_connections
 from logging_config import request_id_var
 from routers import ai as ai_router
@@ -35,10 +36,13 @@ if _sentry_dsn:
     from sentry_sdk.integrations.fastapi import FastApiIntegration
     from sentry_sdk.integrations.starlette import StarletteIntegration
 
+    _sentry_environment = os.environ.get("RAILWAY_ENVIRONMENT", "development")
+    _sentry_is_production = _sentry_environment == "production"
     sentry_sdk.init(
         dsn=_sentry_dsn,
-        environment=os.environ.get("RAILWAY_ENVIRONMENT", "development"),
-        traces_sample_rate=0.05,
+        environment=_sentry_environment,
+        traces_sample_rate=0.05 if _sentry_is_production else 1.0,
+        profiles_sample_rate=0.01 if _sentry_is_production else 0,
         integrations=[
             StarletteIntegration(),
             FastApiIntegration(),
@@ -97,14 +101,24 @@ CSRF_EXEMPT_PATHS = {
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI):
-    require_data_secret()
-    configured_secrets = {
-        os.environ.get("CROP_DATA_SECRET_KEY") or settings.crop_data_secret_key,
-        os.environ.get("CROP_AUTH_TOKEN_SECRET") or settings.crop_auth_token_secret,
-    }
-    if configured_secrets & PLACEHOLDER_SECRETS:
-        raise RuntimeError("FATAL: Placeholder secret detected. Rotate secrets before running in production.")
-    yield
+    try:
+        env_problems = validate_required_environment()
+        if env_problems:
+            # Fail loudly before serving traffic when required production env is unsafe.
+            print("FATAL: Invalid production environment:\n- " + "\n- ".join(env_problems), file=sys.stderr)
+            sys.exit(1)
+        require_data_secret()
+        configured_secrets = {
+            os.environ.get("CROP_DATA_SECRET_KEY") or settings.crop_data_secret_key,
+            os.environ.get("CROP_AUTH_TOKEN_SECRET") or settings.crop_auth_token_secret,
+        }
+        if configured_secrets & PLACEHOLDER_SECRETS:
+            raise RuntimeError("FATAL: Placeholder secret detected. Rotate secrets before running in production.")
+        yield
+    except BaseException as exc:
+        if _sentry_dsn:
+            sentry_sdk.capture_exception(exc)
+        raise
 
 
 app = FastAPI(title="CropConnect ESP32 Ingestion API", version="1.0.0", lifespan=lifespan)

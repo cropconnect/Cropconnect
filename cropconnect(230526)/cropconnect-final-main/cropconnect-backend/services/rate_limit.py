@@ -9,6 +9,7 @@ from logging_config import configure_logging
 
 logger = configure_logging()
 PUBLIC_RATE_LIMITS: dict[str, list[float]] = {}
+AI_RATE_LIMITS: dict[str, list[float]] = {}
 PUBLIC_RATE_LIMIT_DB_FAIL_OPEN = settings.public_rate_limit_db_fail_open
 
 
@@ -26,6 +27,53 @@ def rate_limit_public_request(request: Request, bucket: str, limit: int, window_
 
 def rate_limit_authenticated_request(owner_id: int, bucket: str, limit: int, window_seconds: int) -> None:
     rate_limit_named_key(bucket, f"user:{owner_id}", limit, window_seconds)
+
+
+def rate_limit_ai_request(request: Request, user_id: int | None = None, now: float | None = None) -> None:
+    """Apply per-user AI sliding-window limits before expensive model calls."""
+    identity = f"user:{user_id}" if user_id is not None else f"ip:{public_client_host(request)}"
+    retry_after = _check_sliding_windows(
+        bucket="ai",
+        identity=identity,
+        limits=((10, 60), (50, 60 * 60)),
+        now=now,
+    )
+    if retry_after > 0:
+        # Return Retry-After so clients know exactly when an AI request can be retried.
+        raise HTTPException(
+            status_code=429,
+            detail=f"Rate limit exceeded. Try again in {retry_after} seconds.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+
+def _check_sliding_windows(
+    bucket: str,
+    identity: str,
+    limits: tuple[tuple[int, int], ...],
+    now: float | None = None,
+) -> int:
+    global AI_RATE_LIMITS
+    current_time = now if now is not None else time.time()
+    longest_window = max(window_seconds for _limit, window_seconds in limits)
+    key = f"{bucket}:{identity}"[:255]
+    timestamps = [
+        timestamp
+        for timestamp in AI_RATE_LIMITS.get(key, [])
+        if current_time - timestamp < longest_window
+    ]
+    retry_after = 0
+    for limit, window_seconds in limits:
+        recent = [timestamp for timestamp in timestamps if current_time - timestamp < window_seconds]
+        if len(recent) >= limit:
+            oldest = min(recent)
+            retry_after = max(retry_after, int((oldest + window_seconds) - current_time) + 1)
+    if retry_after:
+        AI_RATE_LIMITS[key] = timestamps
+        return retry_after
+    timestamps.append(current_time)
+    AI_RATE_LIMITS[key] = timestamps
+    return 0
 
 
 def rate_limit_named_key(bucket: str, client_key: str, limit: int, window_seconds: int) -> None:

@@ -8,7 +8,8 @@ if (import.meta.env.VITE_SENTRY_DSN) {
   Sentry.init({
     dsn: import.meta.env.VITE_SENTRY_DSN,
     environment: import.meta.env.MODE,
-    tracesSampleRate: 0.1,
+    tracesSampleRate: import.meta.env.MODE === "production" ? 0.05 : 1.0,
+    replaysOnErrorSampleRate: 1.0,
     replaysSessionSampleRate: 0,
     integrations: [
       Sentry.browserTracingIntegration(),
@@ -23,15 +24,15 @@ if (import.meta.env.VITE_SENTRY_DSN) {
   });
 }
 
-const SentryApp = import.meta.env.VITE_SENTRY_DSN
-  ? Sentry.withErrorBoundary(App, {
-    fallback: <div className="p-8 text-center text-sm text-red-700">Something went wrong. Please refresh.</div>,
-  })
-  : App;
-
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
   <React.StrictMode>
-    <SentryApp />
+    {import.meta.env.VITE_SENTRY_DSN ? (
+      <Sentry.ErrorBoundary fallback={<p>Something went wrong.</p>}>
+        <App />
+      </Sentry.ErrorBoundary>
+    ) : (
+      <App />
+    )}
   </React.StrictMode>,
 );
