@@ -11,6 +11,7 @@ import {
   Wifi,
   Zap,
 } from "lucide-react";
+import { useDashboard } from "../../contexts/DashboardContext";
 import CropPlanner from "../../pages/CropPlanner";
 import { Button } from "../ui/button";
 import AiSection from "./AiSection";
@@ -21,7 +22,8 @@ import SensorSection from "./SensorSection";
 import SettingsSection from "./SettingsSection";
 import WeatherSection from "./WeatherSection";
 
-export default function DashboardPageContent({ ctx }) {
+export default function DashboardPageContent() {
+  const ctx = useDashboard();
   const {
     EMPTY_DISPLAY,
     activePage,

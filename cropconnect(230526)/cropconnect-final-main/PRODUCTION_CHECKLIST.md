@@ -6,7 +6,7 @@
 - [x] Sentry replayIntegration added; replaysOnErrorSampleRate warning resolved
 - [x] docker-compose.yml documented as local-dev-only with danger warning block
 - [x] .env.docker.example created with all required vars listed
-- [x] DashboardContext extracted; DashboardExperience.jsx trimmed to <300 lines
+- [x] DashboardContext fully decoupled — DashboardPageContent reads context directly, no ctx prop-drilling
 - [x] CI generates PWA icons on clean environments before build
 - [x] CI validates environment config before backend tests run
 
