@@ -35,16 +35,68 @@
 
 ## Setting up Sentry alerts
 
+### Backend alerts (Python / FastAPI)
+SENTRY_DSN is already read in cropconnect-backend/app.py.
+Set it in Railway: Project → Service → Variables → SENTRY_DSN
+
+### Frontend alerts (React)
+VITE_SENTRY_DSN is read in cropconnect-frontend/src/index.jsx.
+Set it in Vercel: Project → Settings → Environment Variables → VITE_SENTRY_DSN
+Use the same DSN value as the backend, or create a separate Sentry project
+for the frontend for cleaner separation.
+
+### Creating alert rules in Sentry
 1. Go to your Sentry project → Alerts → Create Alert Rule
-2. Rule 1 — "New issue": trigger on "A new issue is created" → notify via email
-3. Rule 2 — "Error spike": trigger when "Number of errors > 10 in 5 minutes" → notify via email or Slack
-4. Confirm SENTRY_DSN is set in Railway: Settings → Variables → SENTRY_DSN
+
+Rule 1 — New issue notification:
+  - Name: New issue
+  - Condition: A new issue is created
+  - Action: Send an email to <your email>
+  - Save rule
+
+Rule 2 — Error spike:
+  - Name: Error spike
+  - Condition: Number of events in an issue is more than 10 in 5 minutes
+  - Action: Send an email to <your email>
+  - Save rule
+
+Rule 3 (optional) — Notify on first occurrence of a new error in production:
+  - Name: Production new error
+  - Filter: Environment = production
+  - Condition: A new issue is created
+  - Action: Send a Slack notification (if Slack is connected) AND an email
+  - Save rule
+
+### Verifying Sentry is working
+After setting both DSN values and redeploying:
+1. Backend: curl -X POST https://cropconnect01-production.up.railway.app/api/enquiries
+   with an invalid payload. Check Sentry for a validation error event.
+2. Frontend: open the browser console on the production URL and run:
+   throw new Error("Sentry test from browser")
+   Check Sentry → Issues for the event within 30 seconds.
 
 ## Setting up uptime monitoring (UptimeRobot — free)
 
-1. Create account at uptimerobot.com
-2. Add monitor: HTTP(S), URL = https://your-backend.railway.app/api/health
-3. Check interval: every 5 minutes
-4. Alert contacts: your email
-5. Expected keyword: "ok" (validates DB is responding, not just HTTP 200)
-6. A healthy response looks like: {"status":"ok","db":"ok"}
+Step-by-step:
+1. Create a free account at https://uptimerobot.com
+2. Dashboard → Add New Monitor
+3. Monitor Type: HTTP(S)
+4. Friendly Name: CropConnect API
+5. URL: https://cropconnect01-production.up.railway.app/api/health
+6. Monitoring Interval: every 5 minutes
+7. Under "Alert Contacts" → add your email address
+8. Expand "Advanced Settings" → enable "Keyword exists" → keyword value: ok
+   This validates the DB is responding, not just that HTTP returns 200.
+9. Click "Create Monitor"
+
+A healthy response from /api/health looks like:
+  {"status":"ok","db":"ok"}
+
+A degraded response (DB unreachable) looks like:
+  {"status":"degraded","db":"error"}  (HTTP 503)
+
+You will receive an email within 5 minutes if the backend goes down.
+Add a second monitor for the frontend:
+  URL: https://cropconnect01.vercel.app
+  Keyword: CropConnect
+  This catches Vercel deploy failures independently of the backend.
