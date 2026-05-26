@@ -197,23 +197,50 @@ def set_pump_state(
                 )
                 cursor.execute(
                     """
-                    SELECT is_on, updated_at
-                    FROM current_pump_state
-                    WHERE user_id = %s AND device_id = %s AND pump_id = %s
+                    INSERT INTO pump_states (
+                      user_id, email, device_id, pump_id, is_on, runtime_minutes, schedule, sent_to_esp32, message
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, CAST(%s AS JSON), %s, %s)
+                    """,
+                    (
+                        owner_id,
+                        owner_email,
+                        device_id,
+                        payload.pump_id,
+                        1 if requested_state else 0,
+                        payload.runtime or 0,
+                        json_text(payload.schedule),
+                        0,
+                        message,
+                    ),
+                )
+                cursor.execute(
+                    """
+                    SELECT is_on, created_at
+                    FROM pump_states
+                    WHERE user_id = %s AND pump_id = %s
+                    ORDER BY id DESC
                     LIMIT 1
                     """,
-                    (owner_id, device_id, payload.pump_id),
+                    (owner_id, payload.pump_id),
                 )
                 row = cursor.fetchone() or {}
             conn.commit()
         actual_state = bool(row.get("is_on"))
-        updated_at = decimal_to_float(row.get("updated_at")) or updated_at
+        updated_at = decimal_to_float(row.get("created_at")) or updated_at
     except Exception as exc:
         raise_public_error(503, "Could not queue pump command", "Pump command queue failed", exc)
 
     return {
+        "ok": True,
+        "device_id": device_id,
         "pump_id": payload.pump_id,
         "is_on": actual_state,
+        "state": "on" if actual_state else "off",
+        "sent_to_esp32": False,
+        "queued_for_sim800l": True,
+        "message": message,
+        "esp32": None,
         "updated_at": updated_at,
     }
 

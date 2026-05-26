@@ -26,6 +26,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.44.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -49,7 +50,8 @@
     "build": "vite build --outDir build",
     "check": "node scripts/check-routes.mjs",
     "lint": "eslint src scripts",
-    "test": "vitest run"
+    "test": "vitest run",
+    "test:e2e": "playwright test"
   },
   "browserslist": {
     "production": [

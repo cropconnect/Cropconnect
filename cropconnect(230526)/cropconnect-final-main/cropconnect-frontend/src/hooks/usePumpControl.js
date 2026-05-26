@@ -98,7 +98,7 @@ export function usePumpControl({ protectedFetch, userLoaded, sensorConnection, s
       const data = pumpControlMode === "direct"
         ? await sendDirectPumpCommand(pumpId, nextOn)
         : await updatePumpState(pumpId, nextOn);
-      const actualOn = typeof data.is_on === "boolean" ? data.is_on : nextOn;
+      const actualOn = data.is_on !== undefined && data.is_on !== null ? Boolean(data.is_on) : nextOn;
       setPumps((prev) => ({
         ...prev,
         [pumpId]: {
