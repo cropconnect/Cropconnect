@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Clock, Droplets, XCircle } from "lucide-react";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -5,6 +6,21 @@ import { Input } from "../ui/input";
 const EMPTY_DISPLAY = "--";
 const isPresent = (value) => value !== null && value !== undefined && value !== "";
 const displayValue = (value, suffix = "") => (isPresent(value) ? `${value}${suffix}` : EMPTY_DISPLAY);
+
+function useIsOnline() {
+  const [online, setOnline] = useState(() => (typeof navigator === "undefined" ? true : navigator.onLine));
+  useEffect(() => {
+    const on = () => setOnline(true);
+    const off = () => setOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
+  return online;
+}
 
 function PumpCard({
   id,
@@ -20,6 +36,7 @@ function PumpCard({
   removeTimer,
   formatTime,
   formatTimerStartTime,
+  isOnline,
 }) {
   const appliedKnown = pump.appliedOn !== null && pump.appliedOn !== undefined;
   const appliedText = appliedKnown ? (pump.appliedOn ? "ON" : "OFF") : EMPTY_DISPLAY;
@@ -34,8 +51,11 @@ function PumpCard({
         </div>
         <button
           onClick={() => togglePump(id)}
-          disabled={pumpUpdating[id]}
-          className={`relative w-12 h-6 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${pump.on ? "bg-green-500" : "bg-gray-300"}`}
+          disabled={pumpUpdating[id] || !isOnline}
+          title={!isOnline ? "Offline - reconnect to control pumps" : undefined}
+          className={`relative w-12 h-6 rounded-full transition-colors disabled:cursor-not-allowed disabled:opacity-70 ${
+            !isOnline ? "bg-[#E07A5F]/40" : pump.on ? "bg-green-500" : "bg-gray-300"
+          }`}
           aria-label={`Turn ${name} ${pump.on ? "off" : "on"}`}
         >
           <div className={`absolute top-1 w-4 h-4 rounded-full bg-white shadow transition-transform ${pump.on ? "translate-x-7" : "translate-x-1"}`} />
@@ -227,6 +247,8 @@ export default function PumpControlPanel({
   formatTime,
   formatTimerStartTime,
 }) {
+  const isOnline = useIsOnline();
+
   return (
     <div className="space-y-6">
       <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">
@@ -267,6 +289,11 @@ export default function PumpControlPanel({
             If Chrome blocks the request on the deployed HTTPS site, open the direct command URL from the toast/browser or run the frontend locally on HTTP.
           </p>
         )}
+        {!isOnline && (
+          <p className="mt-3 text-xs text-[#E07A5F]">
+            Offline — reconnect to control pumps
+          </p>
+        )}
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <PumpCard
@@ -283,6 +310,7 @@ export default function PumpControlPanel({
           removeTimer={removeTimer}
           formatTime={formatTime}
           formatTimerStartTime={formatTimerStartTime}
+          isOnline={isOnline}
         />
         <PumpCard
           id="pump2"
@@ -298,6 +326,7 @@ export default function PumpControlPanel({
           removeTimer={removeTimer}
           formatTime={formatTime}
           formatTimerStartTime={formatTimerStartTime}
+          isOnline={isOnline}
         />
       </div>
       <div className="p-5 rounded-xl bg-white border border-[#e8e3d8] shadow-sm">

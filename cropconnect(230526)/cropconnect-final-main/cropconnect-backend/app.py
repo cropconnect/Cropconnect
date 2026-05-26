@@ -3,6 +3,7 @@ import re
 import secrets
 import uuid
 import os
+from contextlib import asynccontextmanager
 from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
@@ -20,7 +21,13 @@ from routers import public as public_router
 from routers import pumps as pumps_router
 from routers import sensors as sensors_router
 from routers import weather as weather_router
+from security_crypto import require_data_secret
 from services.auth_service import AUTH_COOKIE_NAME, CSRF_COOKIE_NAME
+
+PLACEHOLDER_SECRETS = {
+    "replace-with-a-long-random-secret",
+    "replace-with-a-different-long-random-secret",
+}
 
 _sentry_dsn = os.environ.get("SENTRY_DSN", "").strip()
 if _sentry_dsn:
@@ -87,7 +94,20 @@ CSRF_EXEMPT_PATHS = {
     "/data",
 }
 
-app = FastAPI(title="CropConnect ESP32 Ingestion API", version="1.0.0")
+
+@asynccontextmanager
+async def lifespan(_app: FastAPI):
+    require_data_secret()
+    configured_secrets = {
+        os.environ.get("CROP_DATA_SECRET_KEY") or settings.crop_data_secret_key,
+        os.environ.get("CROP_AUTH_TOKEN_SECRET") or settings.crop_auth_token_secret,
+    }
+    if configured_secrets & PLACEHOLDER_SECRETS:
+        raise RuntimeError("FATAL: Placeholder secret detected. Rotate secrets before running in production.")
+    yield
+
+
+app = FastAPI(title="CropConnect ESP32 Ingestion API", version="1.0.0", lifespan=lifespan)
 
 
 @app.middleware("http")

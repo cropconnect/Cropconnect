@@ -13,6 +13,7 @@ PUBLIC_RATE_LIMIT_DB_FAIL_OPEN = settings.public_rate_limit_db_fail_open
 
 
 def public_client_host(request: Request) -> str:
+    # Set TRUST_PROXY_HEADERS=true on Railway — proxy sits in front of all services
     forwarded_for = request.headers.get("x-forwarded-for", "").split(",", 1)[0].strip()
     if settings.trust_proxy_headers and forwarded_for:
         return forwarded_for[:255]

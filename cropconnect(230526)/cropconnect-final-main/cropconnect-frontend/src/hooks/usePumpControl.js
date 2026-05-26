@@ -82,30 +82,41 @@ export function usePumpControl({ protectedFetch, userLoaded, sensorConnection, s
   }, [protectedFetch, sensorConnection.deviceId, sensorDeviceId]);
 
   const togglePump = useCallback(async (pumpId) => {
-    const nextOn = !pumpsRef.current[pumpId].on;
+    const previousState = pumpsRef.current[pumpId];
+    const nextOn = !previousState.on;
     const pumpName = pumpId === "pump1" ? "Pump 1" : "Pump 2";
     setPumpUpdating((prev) => ({ ...prev, [pumpId]: true }));
+    setPumps((prev) => ({
+      ...prev,
+      [pumpId]: {
+        ...prev[pumpId],
+        on: nextOn,
+        runtime: nextOn ? 0 : prev[pumpId].runtime,
+      },
+    }));
     try {
       const data = pumpControlMode === "direct"
         ? await sendDirectPumpCommand(pumpId, nextOn)
         : await updatePumpState(pumpId, nextOn);
+      const actualOn = typeof data.is_on === "boolean" ? data.is_on : nextOn;
       setPumps((prev) => ({
         ...prev,
         [pumpId]: {
           ...prev[pumpId],
-          on: nextOn,
-          appliedOn: pumpControlMode === "direct" ? nextOn : prev[pumpId].appliedOn,
+          on: actualOn,
+          appliedOn: pumpControlMode === "direct" ? actualOn : prev[pumpId].appliedOn,
           hardwareConfirmed: pumpControlMode === "direct",
-          runtime: nextOn ? 0 : prev[pumpId].runtime,
+          runtime: actualOn ? 0 : prev[pumpId].runtime,
         },
       }));
-      const stateText = nextOn ? "ON" : "OFF";
+      const stateText = actualOn ? "ON" : "OFF";
       if (pumpControlMode === "direct" && data.usedBrowserFallback) toast.info(data.message);
       else if (pumpControlMode === "direct") toast.success(`${pumpName} ${stateText} command sent directly to ESP32`);
       else if (data.sent_to_esp32) toast.success(`${pumpName} turned ${stateText} through ESP32`);
       else toast.info(data.message || `${pumpName} command queued for SIM800L`);
-    } catch (error) {
-      toast.error(error.message || "Could not reach pump controller");
+    } catch {
+      setPumps((prev) => ({ ...prev, [pumpId]: previousState }));
+      toast.error("Pump command failed — please try again");
     } finally {
       setPumpUpdating((prev) => ({ ...prev, [pumpId]: false }));
     }

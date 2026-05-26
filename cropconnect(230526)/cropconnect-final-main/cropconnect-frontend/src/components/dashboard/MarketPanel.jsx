@@ -1,4 +1,7 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { BarChart3, Brain, RefreshCw } from "lucide-react";
+import { getReadableError } from "../../lib/errors";
 import { Button } from "../ui/button";
 
 const EMPTY_DISPLAY = "--";
@@ -36,10 +39,17 @@ export default function MarketPanel({
   loadMarketPrices,
   loadMarketInsight,
 }) {
+  const navigate = useNavigate();
   const prices = Array.isArray(marketData?.prices) ? marketData.prices : [];
   const mandis = Array.isArray(marketData?.mandis) ? marketData.mandis : [];
   const marketLocation = marketData?.requestedLocation || getUserMarketLocation() || EMPTY_DISPLAY;
-  const marketMessage = marketError || marketData?.message || "";
+  const marketMessage = marketError || marketData?.message ? getReadableError(marketError || marketData?.message) : "";
+  const insightMessage = marketInsightError ? getReadableError(marketInsightError) : "";
+  useEffect(() => {
+    if (marketMessage === "Session expired. Please log in again." || insightMessage === "Session expired. Please log in again.") {
+      navigate("/login");
+    }
+  }, [insightMessage, marketMessage, navigate]);
 
   return (
     <div className="space-y-6">
@@ -156,7 +166,7 @@ export default function MarketPanel({
         <div className="p-4 rounded-lg bg-green-50 text-sm" style={{ color: colors.textDark }} data-dynamic-value>
           {marketInsightLoading
             ? "AI is checking the live market feed..."
-            : marketInsight?.summary || marketInsightError || EMPTY_DISPLAY}
+            : marketInsight?.summary || insightMessage || EMPTY_DISPLAY}
         </div>
         {(marketInsight?.recommendations || []).length > 0 && (
           <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">

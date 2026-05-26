@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import MarketPanel from "./MarketPanel";
 
@@ -18,6 +19,7 @@ describe("MarketPanel", () => {
     const loadMarketPrices = vi.fn();
 
     render(
+      <MemoryRouter>
       <MarketPanel
         colors={colors}
         marketData={{
@@ -50,6 +52,7 @@ describe("MarketPanel", () => {
         loadMarketPrices={loadMarketPrices}
         loadMarketInsight={vi.fn()}
       />
+      </MemoryRouter>
     );
 
     expect(screen.getByText("Latest Mandi Prices")).toBeInTheDocument();

@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     query_api_key_enabled: bool = False
     esp32_get_write_enabled: bool = False
     public_rate_limit_db_fail_open: bool = False
+    # Set TRUST_PROXY_HEADERS=true on Railway — proxy sits in front of all services
     trust_proxy_headers: bool = False
     password_reset_token_ttl_minutes: int = 30
     farm_timer_utc_offset_minutes: int = 330

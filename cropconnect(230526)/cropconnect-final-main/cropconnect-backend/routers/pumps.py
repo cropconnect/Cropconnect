@@ -175,38 +175,46 @@ def set_pump_state(
     if requested_device_id and requested_device_id != owner_device_id:
         raise HTTPException(status_code=403, detail="Pump device does not belong to this account")
     device_id = owner_device_id
-    state = "on" if payload.on else "off"
+    requested_state = bool(payload.on)
     message = "Pump command saved in MySQL. The main ESP32 will fetch it over SIM800L and forward it to the pump ESP32."
+    actual_state = requested_state
+    updated_at = datetime.now(timezone.utc).isoformat()
 
     try:
         with get_connection() as conn:
-            with conn.cursor() as cursor:
+            with conn.cursor(dictionary=True) as cursor:
                 upsert_current_pump_state(
                     cursor,
                     owner_id,
                     owner_email,
                     device_id,
                     payload.pump_id,
-                    bool(payload.on),
+                    requested_state,
                     payload.runtime or 0,
                     payload.schedule,
                     False,
                     message,
                 )
+                cursor.execute(
+                    """
+                    SELECT is_on, updated_at
+                    FROM current_pump_state
+                    WHERE user_id = %s AND device_id = %s AND pump_id = %s
+                    LIMIT 1
+                    """,
+                    (owner_id, device_id, payload.pump_id),
+                )
+                row = cursor.fetchone() or {}
             conn.commit()
+        actual_state = bool(row.get("is_on"))
+        updated_at = decimal_to_float(row.get("updated_at")) or updated_at
     except Exception as exc:
         raise_public_error(503, "Could not queue pump command", "Pump command queue failed", exc)
 
     return {
-        "ok": True,
-        "device_id": device_id,
         "pump_id": payload.pump_id,
-        "state": state,
-        "sent_to_esp32": False,
-        "queued_for_sim800l": True,
-        "message": message,
-        "esp32": None,
-        "updated_at": datetime.now(timezone.utc).isoformat(),
+        "is_on": actual_state,
+        "updated_at": updated_at,
     }
 
 

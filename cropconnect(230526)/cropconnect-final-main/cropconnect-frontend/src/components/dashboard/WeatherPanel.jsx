@@ -1,4 +1,7 @@
+import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { MapPin } from "lucide-react";
+import { getReadableError } from "../../lib/errors";
 
 const EMPTY_DISPLAY = "--";
 const isPresent = (value) => value !== null && value !== undefined && value !== "";
@@ -16,8 +19,16 @@ const WeatherSkeleton = () => (
 );
 
 const WeatherPanel = ({ colors, weatherData, weatherError, userData = {} }) => {
+  const navigate = useNavigate();
   const weather = weatherData || {};
   const hasWeatherData = Object.values(weather).some(isPresent);
+  const friendlyWeatherError = weatherError ? getReadableError(weatherError) : "";
+  useEffect(() => {
+    if (friendlyWeatherError === "Session expired. Please log in again.") {
+      navigate("/login");
+    }
+  }, [friendlyWeatherError, navigate]);
+
   if (!hasWeatherData && !weatherError) {
     return <WeatherSkeleton />;
   }
@@ -116,11 +127,11 @@ const WeatherPanel = ({ colors, weatherData, weatherError, userData = {} }) => {
             </div>
           ) : (
             <div className="h-40 flex items-center justify-center text-center text-sm" style={{ color: colors.textLight }}>
-              {weatherError ? "Live rainfall probability unavailable" : "Loading live rainfall probability..."}
+              {friendlyWeatherError || "Loading live rainfall probability..."}
             </div>
           )}
           <p className="text-xs text-center" style={{ color: colors.textLight }}>
-            Live internet source: {weatherData?.source || (weatherError ? "Unavailable" : "Loading")}
+            Live internet source: {weatherData?.source || (friendlyWeatherError ? "Unavailable" : "Loading")}
           </p>
           {weatherData?.location && (
             <p className="mt-1 text-xs text-center" style={{ color: colors.textLight }}>

@@ -976,6 +976,7 @@ export default function Dashboard() {
     setChatInput,
     setEditData,
     setIsEditingProfile,
+    setActivePage,
     setLanguage: handleLanguageChange,
     setNewTimer,
     setPumpControlMode,

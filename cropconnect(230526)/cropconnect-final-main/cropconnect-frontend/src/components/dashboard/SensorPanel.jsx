@@ -1,5 +1,6 @@
 import { CloudSun, Droplets, Flower2, Leaf, Radio, Sprout, Wheat } from "lucide-react";
 import { SENSOR_THRESHOLDS } from "../../lib/sensorThresholds";
+import { Button } from "../ui/button";
 
 const EMPTY_DISPLAY = "--";
 const isPresent = (value) => value !== null && value !== undefined && value !== "";
@@ -54,28 +55,34 @@ const SensorCard = ({ colors, icon: Icon, title, value, unit, color, min, max, b
   );
 };
 
-const SensorSkeleton = () => (
-  <div className="space-y-6" aria-label="Loading sensor data">
-    <div className="h-24 rounded-xl border border-[#e8e3d8] bg-white p-4 shadow-sm">
-      <div className="h-4 w-40 animate-pulse rounded bg-slate-200" />
-      <div className="mt-3 h-3 w-64 max-w-full animate-pulse rounded bg-slate-100" />
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {Array.from({ length: 6 }).map((_, index) => (
-        <div key={index} className="h-36 rounded-xl border border-[#e8e3d8] bg-white p-4 shadow-sm">
-          <div className="h-4 w-28 animate-pulse rounded bg-slate-200" />
-          <div className="mt-6 h-8 w-20 animate-pulse rounded bg-slate-100" />
-          <div className="mt-6 h-2 w-full animate-pulse rounded bg-slate-100" />
-        </div>
-      ))}
-    </div>
+const EmptySensorState = ({ colors, onGoToSettings }) => (
+  <div className="rounded-xl border p-6 text-center shadow-sm" style={{ background: colors.cream, borderColor: colors.creamDark }}>
+    <svg viewBox="0 0 220 120" className="mx-auto h-28 w-full max-w-xs" role="img" aria-label="ESP32 waiting for connection">
+      <rect x="58" y="38" width="92" height="48" rx="8" fill="none" stroke="#1B4332" strokeWidth="4" />
+      <circle cx="78" cy="56" r="4" fill="#E07A5F" />
+      <circle cx="92" cy="56" r="4" fill="#E07A5F" />
+      <path d="M150 62 H176" stroke="#1B4332" strokeWidth="3" strokeDasharray="5 5" />
+      <path d="M180 54a18 18 0 0 1 24 0" fill="none" stroke="#1B4332" strokeWidth="3" />
+      <path d="M186 62a9 9 0 0 1 12 0" fill="none" stroke="#1B4332" strokeWidth="3" />
+      <circle cx="192" cy="70" r="3" fill="#1B4332" />
+    </svg>
+    <h3 className="mt-4 font-medium text-[#1A201C]">No sensor data yet</h3>
+    <p className="mt-2 text-sm text-[#1A201C]/60">Connect your ESP32 using the setup guide in Settings.</p>
+    <Button
+      type="button"
+      variant="outline"
+      onClick={onGoToSettings}
+      className="mt-5 rounded-full"
+    >
+      Go to Settings
+    </Button>
   </div>
 );
 
-const SensorPanel = ({ colors, sensorConnection = {}, sensorData = {}, userData = {} }) => {
+const SensorPanel = ({ colors, sensorConnection = {}, sensorData = {}, userData = {}, onGoToSettings }) => {
   const hasAnyReading = Object.values(sensorData || {}).some(isPresent);
-  if (!hasAnyReading && !sensorConnection.error && sensorConnection.source !== "esp32") {
-    return <SensorSkeleton />;
+  if (!hasAnyReading) {
+    return <EmptySensorState colors={colors} onGoToSettings={onGoToSettings} />;
   }
 
   return (

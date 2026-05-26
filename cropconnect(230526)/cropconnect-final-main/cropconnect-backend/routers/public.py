@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from fastapi import APIRouter, HTTPException, Request
+from fastapi.responses import JSONResponse
 
 from db.connections import get_connection
 from models import EnquiryIn
@@ -14,18 +15,25 @@ def raise_public_error(status_code: int, detail: str, _context: str, exc: Except
     raise HTTPException(status_code=status_code, detail=detail) from exc
 
 
-@router.get("/api/health")
-def health():
-    status = {"ok": True, "database": "unknown"}
+def database_health_status():
     try:
-      with get_connection() as conn:
-          conn.ping(reconnect=True, attempts=1, delay=0)
-      status["database"] = "connected"
-    except Exception as exc:
-      status["ok"] = False
-      status["database"] = f"unavailable: {type(exc).__name__}"
+        with get_connection() as conn:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT 1")
+                cursor.fetchone()
+        return {"status": "ok", "db": "ok"}
+    except Exception:
+        return JSONResponse(status_code=503, content={"status": "degraded", "db": "error"})
 
-    return status
+
+@router.get("/health")
+def health():
+    return database_health_status()
+
+
+@router.get("/api/health")
+def api_health():
+    return database_health_status()
 
 
 @router.get("/")

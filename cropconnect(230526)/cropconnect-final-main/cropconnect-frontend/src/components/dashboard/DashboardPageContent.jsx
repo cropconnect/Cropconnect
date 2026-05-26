@@ -84,6 +84,7 @@ export default function DashboardPageContent({ ctx }) {
     setChatInput,
     setEditData,
     setIsEditingProfile,
+    setActivePage,
     setLanguage,
     setNewTimer,
     setPumpControlMode,
@@ -424,6 +425,7 @@ export default function DashboardPageContent({ ctx }) {
             sensorConnection={sensorConnection}
             sensorData={sensorData}
             userData={userData}
+            onGoToSettings={() => setActivePage("settings")}
           />
         );
 

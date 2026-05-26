@@ -4,6 +4,7 @@ import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-route
 import { Toaster } from "sonner";
 import { API, AUTH_CACHE_KEY, authHeaders, readAuthToken, readSessionUser } from "./lib/api";
 
+import AppLoadingScreen from "./components/AppLoadingScreen";
 import OfflineBanner from "./components/OfflineBanner";
 import { LandingLanguageProvider } from "./contexts/AppLanguageContext";
 
@@ -69,11 +70,7 @@ export function ProtectedPage({ children }) {
   }, [authState]);
 
   if (authState === "checking") {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#FDFBF7] px-4 text-sm font-medium text-[#1B4332]">
-        Checking session...
-      </div>
-    );
+    return <AppLoadingScreen />;
   }
 
   if (authState === "denied") {
@@ -89,7 +86,7 @@ function App() {
       <LandingLanguageProvider>
         <OfflineBanner />
         <BrowserRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
-          <Suspense fallback={<div className="flex min-h-screen items-center justify-center bg-[#FDFBF7] px-4 text-sm font-medium text-[#1B4332]">Loading...</div>}>
+          <Suspense fallback={<AppLoadingScreen />}>
             <Routes>
               <Route path="/" element={<LandingPage />} />
               <Route path="/login" element={<LoginPage />} />

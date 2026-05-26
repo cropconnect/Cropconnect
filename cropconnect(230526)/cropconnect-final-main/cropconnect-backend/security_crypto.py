@@ -18,6 +18,10 @@ PBKDF2_ITERATIONS = 210_000
 AUTH_TOKEN_PREFIX = "ccauth.v1"
 AUTH_TOKEN_TTL_SECONDS = 60 * 60 * 24 * 7
 logger = logging.getLogger("cropconnect")
+PLACEHOLDER_SECRETS = {
+    "replace-with-a-long-random-secret",
+    "replace-with-a-different-long-random-secret",
+}
 
 
 def _secret() -> str:
@@ -29,10 +33,15 @@ def _auth_secret() -> str:
 
 
 def require_data_secret() -> None:
-    if not _secret():
+    data_secret = _secret()
+    auth_secret = _auth_secret()
+    if not data_secret:
         raise RuntimeError("CROP_DATA_SECRET_KEY is required before starting CropConnect backend")
-    if not _auth_secret():
+    if not auth_secret:
         raise RuntimeError("CROP_AUTH_TOKEN_SECRET is required before starting CropConnect backend")
+    if data_secret in PLACEHOLDER_SECRETS or auth_secret in PLACEHOLDER_SECRETS:
+        logger.error("FATAL: Placeholder secret detected. Rotate secrets before running in production.")
+        raise RuntimeError("FATAL: Placeholder secret detected. Rotate secrets before running in production.")
 
 
 def _fernet() -> Fernet:

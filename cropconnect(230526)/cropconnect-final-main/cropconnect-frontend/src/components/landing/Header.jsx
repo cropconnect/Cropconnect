@@ -128,6 +128,9 @@ export default function Header() {
       {open && (
         <div className="lg:hidden bg-[#FDFBF7] border-t border-[#D5D1C5]">
           <div className="px-5 py-5 flex flex-col gap-3">
+            <div className="w-full rounded-xl border border-[#D5D1C5] bg-white/70 px-3 py-2">
+              <LanguageSelect value={language} onChange={setLanguage} className="w-full" />
+            </div>
             {links.map((l) => (
               <button
                 key={l.id}

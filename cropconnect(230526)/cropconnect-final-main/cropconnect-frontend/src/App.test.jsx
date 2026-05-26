@@ -21,7 +21,7 @@ describe("ProtectedPage", () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText("Checking session...")).toBeInTheDocument();
+    expect(screen.getByLabelText("Loading")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Login screen")).toBeInTheDocument());
     expect(screen.queryByText("Private dashboard")).not.toBeInTheDocument();
   });
