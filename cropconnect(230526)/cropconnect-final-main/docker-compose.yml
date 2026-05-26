@@ -2,6 +2,7 @@ services:
   mysql:
     image: mysql:8.4
     environment:
+      # DEV ONLY — change all passwords before any production or cloud deployment.
       MYSQL_ROOT_PASSWORD: cropconnect_root
       MYSQL_DATABASE: cropconnect
     ports:
@@ -34,6 +35,7 @@ services:
       FRONTEND_PUBLIC_URL: http://localhost:3000
       ESP32_GET_WRITE_ENABLED: "true"
       QUERY_API_KEY_ENABLED: "true"
+      # DEV ONLY — never set true in production. Global key bypasses per-device auth.
       ALLOW_GLOBAL_ESP32_API_KEY: "true"
       ESP32_API_KEY: docker-dev-esp32-key
       PUBLIC_TRANSLATION_ENABLED: "false"
